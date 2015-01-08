@@ -15,7 +15,7 @@ class WebhookReceiverTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException              Tokenly\XChainClient\Exception\AuthorizationException
-     * @expectedExceptionMessageRegExp !API key not found!
+     * @expectedExceptionMessageRegExp !API token not found!
      */
     public function testMissingAPIKey() {
         $this->validateNotification(['apiToken' => null]);
@@ -23,7 +23,7 @@ class WebhookReceiverTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException              Tokenly\XChainClient\Exception\AuthorizationException
-     * @expectedExceptionMessageRegExp !Invalid API key!
+     * @expectedExceptionMessageRegExp !Invalid API token!
      */
     public function testInvalidAPIKey() {
         $this->validateNotification(['apiToken' => 'somethingelse']);
