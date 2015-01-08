@@ -19,20 +19,22 @@ class WebHookReceiver
         $this->api_secret = $api_secret;
     }
 
-    public function validateWebhookNotificationFromRequest(\Symfony\Component\HttpFoundation\Request $request) {
+    public function validateAndParseWebhookNotificationFromRequest(\Symfony\Component\HttpFoundation\Request $request) {
         $json_data = json_decode($request->getContent(), true);
         if (!is_array($json_data)) { throw new AuthorizationException("Invalid webhook data received"); }
 
-        return $this->validateWebhookNotification($json_data);
-    }
+        // throws an exception if invalid
+        $this->validateWebhookNotification($json_data);
 
+        return $this->parseWebhookNotificationData($json_data);
+    }
 
     public function validateWebhookNotification($json_data) {
         $is_valid = false;
 
         // validate vars
-        if (!strlen($json_data['apiKey'])) { throw new AuthorizationException("API key not found"); }
-        if ($json_data['apiKey'] != $this->api_token) { throw new AuthorizationException("Invalid API key"); }
+        if (!strlen($json_data['apiToken'])) { throw new AuthorizationException("API token not found"); }
+        if ($json_data['apiToken'] != $this->api_token) { throw new AuthorizationException("Invalid API token"); }
         if (!strlen($json_data['signature'])) { throw new AuthorizationException("signature not found"); }
         $notification_json_string = $json_data['payload'];
         if (!strlen($notification_json_string)) { throw new AuthorizationException("payload not found"); }
@@ -45,6 +47,11 @@ class WebHookReceiver
         return $is_valid;
     }
 
+    public function parseWebhookNotificationData($json_data) {
+        $json_data['rawPayload'] = $json_data['payload'];
+        $json_data['payload'] = json_decode($json_data['rawPayload'], true);
+        return $json_data;
+    }
 
 
 }

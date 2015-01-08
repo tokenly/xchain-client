@@ -18,7 +18,7 @@ class WebhookReceiverTest extends PHPUnit_Framework_TestCase
      * @expectedExceptionMessageRegExp !API key not found!
      */
     public function testMissingAPIKey() {
-        $this->validateNotification(['apiKey' => null]);
+        $this->validateNotification(['apiToken' => null]);
     }
 
     /**
@@ -26,7 +26,7 @@ class WebhookReceiverTest extends PHPUnit_Framework_TestCase
      * @expectedExceptionMessageRegExp !Invalid API key!
      */
     public function testInvalidAPIKey() {
-        $this->validateNotification(['apiKey' => 'somethingelse']);
+        $this->validateNotification(['apiToken' => 'somethingelse']);
     }
 
     /**
@@ -63,7 +63,7 @@ class WebhookReceiverTest extends PHPUnit_Framework_TestCase
             'id'        => 'xxxx',
             'time'      => date("Y-m-d H:i:s"),
             'attempt'   => 1,
-            'apiKey'    => $API_TOKEN,
+            'apiToken'  => $API_TOKEN,
             'signature' => hash_hmac('sha256', $payload_string, $API_SECRET, false),
             'payload'   => $payload_string,
         ], $vars);
