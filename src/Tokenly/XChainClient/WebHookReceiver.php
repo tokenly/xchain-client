@@ -28,8 +28,6 @@ class WebHookReceiver
 
 
     public function validateWebhookNotification($json_data) {
-        $is_valid = false;
-
         // validate vars
         if (!strlen($json_data['apiKey'])) { throw new AuthorizationException("API key not found"); }
         if ($json_data['apiKey'] != $this->api_token) { throw new AuthorizationException("Invalid API key"); }
@@ -42,6 +40,8 @@ class WebHookReceiver
         $is_valid = ($expected_signature === $json_data['signature']);
         if (!$is_valid) { throw new AuthorizationException("Invalid signature"); }
 
+        // this will always be true
+        //   otherwise an exception will be thrown by now
         return $is_valid;
     }
 
