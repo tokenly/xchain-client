@@ -63,6 +63,18 @@ class Client
         return $result;
     }
 
+    /**
+     * gets the current asset balances
+     * @param  string $address bitcoin address
+     * @param  boolean $as_satoshis if true, return balances insatoshis
+     * @return array an array like ['ASSET' => value, 'ASSET2' => value]
+     */
+    public function getBalances($address, $as_satoshis=false) {
+        $result = $this->newAPIRequest('GET', '/balances/'.$address);
+        $key = ($as_satoshis ? 'balancesSat' : 'balances');
+        return $result[$key];
+    }
+
 
     protected function newAPIRequest($method, $path, $data=[]) {
         $api_path = '/api/v1'.$path;
