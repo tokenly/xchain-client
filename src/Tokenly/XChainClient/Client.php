@@ -78,15 +78,12 @@ class Client
 
         // add auth
         $this->getAuthenticationGenerator()->addSignatureToGuzzleRequest($request, $this->api_key, $this->api_secret);
-        \LTBAuctioneer\Debug\Debug::trace("\$request=".$request,__FILE__,__LINE__,$this);
         
         // send request
         try {
             $response = $client->send($request);
-            \LTBAuctioneer\Debug\Debug::trace("\$response=".$response,__FILE__,__LINE__,$this);
         } catch (RequestException $e) {
             if ($response = $e->getResponse()) {
-                \LTBAuctioneer\Debug\Debug::trace("[ERROR] \$response=".$response,__FILE__,__LINE__,$this);
                 // interpret the response and error message
                 $code = $response->getStatusCode();
                 $json = $response->json();
