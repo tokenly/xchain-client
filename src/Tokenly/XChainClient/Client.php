@@ -30,6 +30,16 @@ class Client
     }
 
     /**
+     * get the payment address details
+     * @param  string $uuid id of the paymehnt address
+     * @return array  array of payment address details
+     */
+    public function getPaymentAddress($uuid) {
+        $result = $this->newAPIRequest('GET', '/addresses/'.$uuid);
+        return $result;
+    }
+
+    /**
      * monitor a new address
      * @param  string  $address          bitcoin/counterparty address
      * @param  string  $webhook_endpoint webhook callback URL
