@@ -13,11 +13,11 @@ use Exception;
 class Client
 {
     
-    function __construct($xchain_url, $api_key, $api_secret)
+    function __construct($xchain_url, $api_token, $api_secret_key)
     {
-        $this->xchain_url = $xchain_url;
-        $this->api_key    = $api_key;
-        $this->api_secret = $api_secret;
+        $this->xchain_url     = $xchain_url;
+        $this->api_token      = $api_token;
+        $this->api_secret_key = $api_secret_key;
     }
 
     /**
@@ -99,7 +99,7 @@ class Client
         }
 
         // add auth
-        $this->getAuthenticationGenerator()->addSignatureToGuzzleRequest($request, $this->api_key, $this->api_secret);
+        $this->getAuthenticationGenerator()->addSignatureToGuzzleRequest($request, $this->api_token, $this->api_secret_key);
         
         // send request
         try {

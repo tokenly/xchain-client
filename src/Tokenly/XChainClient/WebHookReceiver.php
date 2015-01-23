@@ -11,13 +11,13 @@ use Tokenly\XChainClient\Exception\AuthorizationException;
 class WebHookReceiver
 {
     
-    public function __construct($api_token, $api_secret)
+    public function __construct($api_token, $api_scret_key)
     {
         if (!strlen($api_token)) { throw new AuthorizationException("API token must exist"); }
-        if (!strlen($api_secret)) { throw new AuthorizationException("API secret must exist"); }
+        if (!strlen($api_scret_key)) { throw new AuthorizationException("API secret key must exist"); }
 
         $this->api_token  = $api_token;
-        $this->api_secret = $api_secret;
+        $this->api_scret_key = $api_scret_key;
     }
 
     /**
@@ -70,7 +70,7 @@ class WebHookReceiver
         if (!strlen($notification_json_string)) { throw new AuthorizationException("payload not found"); }
 
         // check signature
-        $expected_signature = hash_hmac('sha256', $notification_json_string, $this->api_secret, false);
+        $expected_signature = hash_hmac('sha256', $notification_json_string, $this->api_scret_key, false);
         $is_valid = ($expected_signature === $json_data['signature']);
         if (!$is_valid) { throw new AuthorizationException("Invalid signature"); }
 
