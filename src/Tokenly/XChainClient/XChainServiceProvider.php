@@ -44,7 +44,7 @@ class XChainServiceProvider extends ServiceProvider
         $config = $this->app['files']->getRequire($defaultConfigPath);
 
         // Check the user config file
-        $userConfigPath    = app()->configPath().'/packages/xchainclient/xchain.php';
+        $userConfigPath = app()->configPath().'/packages/xchainclient/xchain.php';
         if (file_exists($userConfigPath)) 
         {       
             // User has their own config, let's merge them properly
