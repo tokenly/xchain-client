@@ -14,6 +14,8 @@ use \PHPUnit_Framework_TestCase;
 class MockBuilder
 {
 
+    protected $requests_remainning_before_throwing_exception = null;
+
     function __construct(Application $app) {
         $this->app = $app;
     }
@@ -21,6 +23,12 @@ class MockBuilder
 
     ////////////////////////////////////////////////////////////////////////
 
+    public function beginThrowingExceptionsAfterCount($count=0) {
+        $this->requests_remainning_before_throwing_exception = $count;
+    }
+    public function stopThrowingExceptions() {
+        $this->requests_remainning_before_throwing_exception = null;
+    }
 
     public function installXChainMockClient(PHPUnit_Framework_TestCase $test_case) {
         // record the calls
@@ -34,6 +42,14 @@ class MockBuilder
 
         // override the newAPIRequest method
         $xchain_client_mock->method('newAPIRequest')->will($test_case->returnCallback(function($method, $path, $data) use ($xchain_recorder) {
+            if ($this->requests_remainning_before_throwing_exception !== null) {
+                if ($this->requests_remainning_before_throwing_exception <= 0) {
+                    throw new Exception("Test Exception Triggered", 1);
+                }
+                --$this->requests_remainning_before_throwing_exception;
+                if ($this->requests_remainning_before_throwing_exception < 0) { $this->requests_remainning_before_throwing_exception = 0; }
+            }
+
             // store the method for test verification
             $xchain_recorder->calls[] = [
                 'method' => $method,
