@@ -37,22 +37,13 @@ class XChainServiceProvider extends ServiceProvider
 
     protected function getConfig()
     {
-        // Path to the default config
-        $defaultConfigPath = __DIR__.'/../../config/xchain.php';
+        // simple config
+        $config = [
+            'connection_url' => env('XCHAIN_CONNECTION_URL', 'http://xchain.tokenly.co'),
+            'api_token'      => env('XCHAIN_API_TOKEN'     , null),
+            'api_key'        => env('XCHAIN_API_KEY'       , null),
+        ];
 
-        // Load the default config
-        $config = $this->app['files']->getRequire($defaultConfigPath);
-
-        // Check the user config file
-        $userConfigPath = app()->configPath().'/packages/xchainclient/xchain.php';
-        if (file_exists($userConfigPath)) 
-        {       
-            // User has their own config, let's merge them properly
-            $userConfig = $this->app['files']->getRequire($userConfigPath);
-            $config     = array_replace_recursive($config, $userConfig);
-        }
-
-        // just return the config
         return $config;
     }
 
