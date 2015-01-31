@@ -67,6 +67,9 @@ class MockBuilder
             if (substr($path, 0, 7) == '/sends/') {
                 return $this->sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data);
             }
+            if (substr($path, 0, 10) == '/balances/') {
+                return $this->sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data);
+            }
 
             throw new Exception("No sample method for $method $path", 1);
         }));
@@ -107,6 +110,20 @@ class MockBuilder
             "quantitySat" => CurrencyUtil::valueToSatoshis($data['quantity']),
             "asset"       => $data['asset'],
             "is_sweep"    => !!$data['sweep'],
+        ];
+    }
+    public function sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data) {
+        return [
+            'balances' => [
+                'BTC'     => 0.01,
+                'LTBCOIN' => 1000,
+                'SOUP'    => 5000,
+            ],
+            'balancesSat' => [
+                'BTC'     => 0.01 * 100000000,
+                'LTBCOIN' => 1000 * 100000000,
+                'SOUP'    => 5000 * 100000000,
+            ],
         ];
     }
 

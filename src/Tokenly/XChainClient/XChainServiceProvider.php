@@ -3,6 +3,7 @@
 namespace Tokenly\XChainClient;
 
 use Exception;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 
 /*
@@ -22,27 +23,30 @@ class XChainServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $config = $this->getConfig();
+        $this->bindConfig();
 
-        $this->app->bind('Tokenly\XChainClient\Client', function($app) use ($config) {
-            $xchain_client = new \Tokenly\XChainClient\Client($config['connection_url'], $config['api_token'], $config['api_key']);
+        $this->app->bind('Tokenly\XChainClient\Client', function($app) {
+            $xchain_client = new \Tokenly\XChainClient\Client(Config::get('xchain.connection_url'), Config::get('xchain.api_token'), Config::get('xchain.api_key'));
             return $xchain_client;
         });
 
-        $this->app->bind('Tokenly\XChainClient\WebHookReceiver', function($app) use ($config) {
-            $webhook_receiver = new \Tokenly\XChainClient\WebHookReceiver($config['api_token'], $config['api_key']);
+        $this->app->bind('Tokenly\XChainClient\WebHookReceiver', function($app) {
+            $webhook_receiver = new \Tokenly\XChainClient\WebHookReceiver(Config::get('xchain.api_token'), Config::get('xchain.api_key'));
             return $webhook_receiver;
         });
     }
 
-    protected function getConfig()
+    protected function bindConfig()
     {
         // simple config
         $config = [
-            'connection_url' => env('XCHAIN_CONNECTION_URL', 'http://xchain.tokenly.co'),
-            'api_token'      => env('XCHAIN_API_TOKEN'     , null),
-            'api_key'        => env('XCHAIN_API_KEY'       , null),
+            'xchain.connection_url' => env('XCHAIN_CONNECTION_URL', 'http://xchain.tokenly.co'),
+            'xchain.api_token'      => env('XCHAIN_API_TOKEN'     , null),
+            'xchain.api_key'        => env('XCHAIN_API_KEY'       , null),
         ];
+
+        // set the laravel config
+        Config::set($config);
 
         return $config;
     }
