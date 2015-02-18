@@ -62,13 +62,32 @@ class Client
      * creates a new payment address
      * @return array An array with an (string) id and (string) address
      */
-    public function send($payment_address_id, $destination, $quantity, $asset, $sweep=false) {
+    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
+            'sweep'       => false,
+        ];
+        if ($fee !== null) { $body['fee'] = $fee; }
+
+        $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
+        return $result;
+    }
+
+    /**
+     * sends the value of all UTXOs to a destination
+     * @return array the send details
+     */
+    public function sweepBTC($payment_address_id, $destination, $fee=null, $sweep=false) {
+        $body = [
+            'destination' => $destination,
+            'quantity'    => null,
+            'asset'       => 'BTC',
             'sweep'       => $sweep,
         ];
+        if ($fee !== null) { $body['fee'] = $fee; }
+
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
     }
