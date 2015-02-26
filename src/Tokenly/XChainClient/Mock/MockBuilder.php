@@ -5,6 +5,8 @@ namespace Tokenly\XChainClient\Mock;
 use Exception;
 use Illuminate\Foundation\Application;
 use Tokenly\CurrencyLib\CurrencyUtil;
+use Tokenly\XChainClient\Mock\MockTestCase;
+use \PHPUnit_Framework_MockObject_MockBuilder;
 use \PHPUnit_Framework_TestCase;
 
 /**
@@ -30,15 +32,21 @@ class MockBuilder
         $this->requests_remainning_before_throwing_exception = null;
     }
 
-    public function installXChainMockClient(PHPUnit_Framework_TestCase $test_case) {
+    public function installXChainMockClient(PHPUnit_Framework_TestCase $test_case=null) {
         // record the calls
         $xchain_recorder = new \stdClass();
         $xchain_recorder->calls = [];
 
-        $xchain_client_mock = $test_case->getMockBuilder('\Tokenly\XChainClient\Client')
-            ->disableOriginalConstructor()
-            ->setMethods(['newAPIRequest'])
-            ->getMock();
+        if ($test_case === null) { $test_case = new MockTestCase(); }
+
+        if ($test_case) {
+            $xchain_client_mock = $test_case->getMockBuilder('\Tokenly\XChainClient\Client')
+                ->disableOriginalConstructor()
+                ->setMethods(['newAPIRequest'])
+                ->getMock();
+        }
+
+
 
         // override the newAPIRequest method
         $xchain_client_mock->method('newAPIRequest')->will($test_case->returnCallback(function($method, $path, $data) use ($xchain_recorder) {
