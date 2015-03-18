@@ -62,14 +62,16 @@ class Client
      * creates a new payment address
      * @return array An array with an (string) id and (string) address
      */
-    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null) {
+    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $multisig_dust_size=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
             'sweep'       => false,
         ];
-        if ($fee !== null) { $body['fee'] = $fee; }
+        if ($fee !== null)                { $body['fee']                = $fee; }
+        if ($dust_size !== null)          { $body['dust_size']          = $dust_size; }
+        if ($multisig_dust_size !== null) { $body['multisig_dust_size'] = $multisig_dust_size; }
 
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
