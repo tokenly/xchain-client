@@ -17,6 +17,7 @@ class MockBuilder
 {
 
     protected $requests_remainning_before_throwing_exception = null;
+    protected $output_transaction_id = '0000000000000000000000000000001111';
 
     function __construct(Application $app) {
         $this->app = $app;
@@ -30,6 +31,10 @@ class MockBuilder
     }
     public function stopThrowingExceptions() {
         $this->requests_remainning_before_throwing_exception = null;
+    }
+
+    public function setOutputTransactionID($output_transaction_id) {
+        $this->output_transaction_id = $output_transaction_id;
     }
 
     public function installXChainMockClient(PHPUnit_Framework_TestCase $test_case=null) {
@@ -112,7 +117,7 @@ class MockBuilder
     public function sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data) {
         return [
             "id"          => "xxxxxxxx-xxxx-4xxx-yxxx-333333333333",
-            "txid"        => "0000000000000000000000000000001111",
+            "txid"        => $this->output_transaction_id,
             "destination" => $data['destination'],
             "quantity"    => $data['quantity'],
             "quantitySat" => CurrencyUtil::valueToSatoshis($data['quantity']),
