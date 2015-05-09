@@ -105,6 +105,17 @@ class Client
         $key = ($as_satoshis ? 'balancesSat' : 'balances');
         return $result[$key];
     }
+    
+    /**
+     * gets info for a particular asset
+     * @param string $asset counterparty asset
+     * @return array
+     * */
+    public function getAsset($asset)
+    {
+		$result = $this->newAPIRequest('GET', '/assets/'.$asset);
+		return $result;
+	}
 
 
     protected function newAPIRequest($method, $path, $data=[]) {
