@@ -58,6 +58,12 @@ class Client
         return $result;
     }
     
+    /**
+     * switches a monitor between active and inactive states
+     * @param string $id 				the uuid of the address monitor
+     * @param boolean $active 			active
+     * @return array					monitor object
+     * */
     public function updateAddressMonitorActiveState($id, $active=true) {
         $body = [
             'active'          => $active,
@@ -66,12 +72,22 @@ class Client
         return $result;
 	}
 	
+    /**
+     * get details about an address monitor
+     * @param string $id 				the uuid of the address monitor
+     * @return array					monitor object
+     * */	
 	public function getAddressMonitor($id)
 	{
         $result = $this->newAPIRequest('GET', '/monitors/'.$id, array());
         return $result;	
 	}
 	
+    /**
+     * destroys an address monitor from the DB
+     * @param string $id 				the uuid of the address monitor
+     * @return null
+     * */	
 	public function destroyAddressMonitor($id)
 	{
         $result = $this->newAPIRequest('DELETE', '/monitors/'.$id, array());
