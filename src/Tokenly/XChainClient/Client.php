@@ -57,6 +57,26 @@ class Client
         $result = $this->newAPIRequest('POST', '/monitors', $body);
         return $result;
     }
+    
+    public function updateAddressMonitorActiveState($id, $active=true) {
+        $body = [
+            'active'          => $active,
+        ];
+        $result = $this->newAPIRequest('UPDATE', '/monitors/'.$id, $body);
+        return $result;
+	}
+	
+	public function getAddressMonitor($id)
+	{
+        $result = $this->newAPIRequest('GET', '/monitors/'.$id, array());
+        return $result;	
+	}
+	
+	public function destroyAddressMonitor($id)
+	{
+        $result = $this->newAPIRequest('DELETE', '/monitors/'.$id, array());
+        return $result;	
+	}
 
     /**
      * creates a new payment address
