@@ -62,7 +62,7 @@ class Client
         $body = [
             'active'          => $active,
         ];
-        $result = $this->newAPIRequest('UPDATE', '/monitors/'.$id, $body);
+        $result = $this->newAPIRequest('PATCH', '/monitors/'.$id, $body);
         return $result;
 	}
 	
