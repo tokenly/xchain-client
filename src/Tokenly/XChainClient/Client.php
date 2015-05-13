@@ -160,8 +160,8 @@ class Client
         $client = new GuzzleClient(['base_url' => $this->xchain_url,]);
 
         $request = $client->createRequest($method, $api_path);
-        if ($data AND $method == 'POST') {
-            $request = $client->createRequest('POST', $api_path, ['json' => $data]);
+        if ($data AND ($method == 'POST' OR $method == 'PATCH')) {
+            $request = $client->createRequest($method, $api_path, ['json' => $data]);
         } else if ($method == 'GET') {
             $request = $client->createRequest($method, $api_path, ['query' => $data]);
         }
