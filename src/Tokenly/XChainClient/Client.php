@@ -57,6 +57,42 @@ class Client
         $result = $this->newAPIRequest('POST', '/monitors', $body);
         return $result;
     }
+    
+    /**
+     * switches a monitor between active and inactive states
+     * @param string $id 				the uuid of the address monitor
+     * @param boolean $active 			active
+     * @return array					monitor object
+     * */
+    public function updateAddressMonitorActiveState($id, $active=true) {
+        $body = [
+            'active'          => $active,
+        ];
+        $result = $this->newAPIRequest('PATCH', '/monitors/'.$id, $body);
+        return $result;
+	}
+	
+    /**
+     * get details about an address monitor
+     * @param string $id 				the uuid of the address monitor
+     * @return array					monitor object
+     * */	
+	public function getAddressMonitor($id)
+	{
+        $result = $this->newAPIRequest('GET', '/monitors/'.$id, array());
+        return $result;	
+	}
+	
+    /**
+     * destroys an address monitor from the DB
+     * @param string $id 				the uuid of the address monitor
+     * @return null
+     * */	
+	public function destroyAddressMonitor($id)
+	{
+        $result = $this->newAPIRequest('DELETE', '/monitors/'.$id, array());
+        return $result;	
+	}
 
     /**
      * creates a new payment address
@@ -105,6 +141,17 @@ class Client
         $key = ($as_satoshis ? 'balancesSat' : 'balances');
         return $result[$key];
     }
+    
+    /**
+     * gets info for a particular asset
+     * @param string $asset counterparty asset
+     * @return array
+     * */
+    public function getAsset($asset)
+    {
+		$result = $this->newAPIRequest('GET', '/assets/'.$asset);
+		return $result;
+	}
 
 
     protected function newAPIRequest($method, $path, $data=[]) {
@@ -113,8 +160,8 @@ class Client
         $client = new GuzzleClient(['base_url' => $this->xchain_url,]);
 
         $request = $client->createRequest($method, $api_path);
-        if ($data AND $method == 'POST') {
-            $request = $client->createRequest('POST', $api_path, ['json' => $data]);
+        if ($data AND ($method == 'POST' OR $method == 'PATCH')) {
+            $request = $client->createRequest($method, $api_path, ['json' => $data]);
         } else if ($method == 'GET') {
             $request = $client->createRequest($method, $api_path, ['query' => $data]);
         }
