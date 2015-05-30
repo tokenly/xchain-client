@@ -119,7 +119,7 @@ class Client
     public function sweepAllAssets($payment_address_id, $destination, $fee=null, $dust_size=null) {
         $body = [
             'destination' => $destination,
-            'quantity'    => $quantity,
+            'quantity'    => null,
             'asset'       => 'ALLASSETS',
             'sweep'       => true,
         ];
@@ -176,7 +176,12 @@ class Client
             if ($response = $e->getResponse()) {
                 // interpret the response and error message
                 $code = $response->getStatusCode();
-                $json = $response->json();
+                try {
+                    $json = $response->json();
+                } catch (Exception $parse_json_exception) {
+                    // could not parse json
+                    $json = null;
+                }
                 if ($json and isset($json['message'])) {
                     throw new Exception($json['message'], $code);
                 }
