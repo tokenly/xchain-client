@@ -98,15 +98,16 @@ class Client
      * creates a new payment address
      * @return array An array with an (string) id and (string) address
      */
-    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null) {
+    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
             'sweep'       => false,
         ];
-        if ($fee !== null)       { $body['fee']       = $fee; }
-        if ($dust_size !== null) { $body['dust_size'] = $dust_size; }
+        if ($fee !== null)        { $body['fee']       = $fee; }
+        if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
+        if ($request_id !== null) { $body['requestId'] = $request_id; }
 
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
@@ -116,15 +117,16 @@ class Client
      * sends all assets and all BTC to a destination address
      * @return array the send details
      */
-    public function sweepAllAssets($payment_address_id, $destination, $fee=null, $dust_size=null) {
+    public function sweepAllAssets($payment_address_id, $destination, $fee=null, $dust_size=null, $request_id=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => null,
             'asset'       => 'ALLASSETS',
             'sweep'       => true,
         ];
-        if ($fee !== null)       { $body['fee']       = $fee; }
-        if ($dust_size !== null) { $body['dust_size'] = $dust_size; }
+        if ($fee !== null)        { $body['fee']       = $fee; }
+        if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
+        if ($request_id !== null) { $body['requestId'] = $request_id; }
 
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
