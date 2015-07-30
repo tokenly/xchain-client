@@ -133,7 +133,8 @@ class Client
     }
 
     /**
-     * gets the current asset balances
+     * Gets the current asset balances for a bitcoin address
+     * For balances of payment addresses, please see the getAccountBalances method.
      * @param  string $address bitcoin address
      * @param  boolean $as_satoshis if true, return balances insatoshis
      * @return array an array like ['ASSET' => value, 'ASSET2' => value]
@@ -155,6 +156,189 @@ class Client
 		return $result;
 	}
 
+    ////////////////////////////////////////////////////////////////////////
+    // Acounts
+
+    /**
+     * Creates a new account for the payment address
+     * @param  string $payment_address_uuid payment address id
+     * @param  string $account_name         a name of the account
+     * @param  array $meta_data             optional meta data stored along with this account
+     * @return array                        the new account
+     */
+    public function createAccount($payment_address_uuid, $account_name, $meta_data=null) {
+        $body = [
+            'addressId' => $payment_address_uuid,
+            'name'      => $account_name,
+        ];
+        if ($meta_data !== null) { $body['meta'] = $meta_data; }
+
+        $result = $this->newAPIRequest('POST', '/accounts', $body);
+        return $result;
+    }
+
+    /**
+     * Updates an existing account
+     * @param  string $account_uuid account id
+     * @param  string $account_name a name of the account
+     * @param  array $meta_data     optional meta data stored along with this account
+     * @return array                the updated account
+     */
+    public function updateAccount($account_uuid, $account_name=null, $meta_data=null) {
+        $body = [];
+
+        if ($account_name !== null) { $body['name'] = $account_name; }
+        if ($meta_data !== null) { $body['meta'] = $meta_data; }
+
+        $result = $this->newAPIRequest('PATCH', '/accounts', $body);
+        return $result;
+    }
+
+
+
+    /**
+     * Fetch existing accounts
+     * @param  string $payment_address_uuid the address id
+     * @param  boolean $active              Set to false to get the inactive accounts
+     * @return array                        a numbered array of all accounts
+     */
+    public function getAccounts($payment_address_uuid, $active=true) {
+        $result = $this->newAPIRequest('GET', '/accounts/'.$payment_address_uuid.'?active='.($active ? '1' : '0'));
+        return $result;
+    }
+
+    /**
+     * Fetch an existing account by ID
+     * @param  string $account_uuid account id
+     * @param  boolean $active              Set to false to get the inactive accounts
+     * @return array                        the account data
+     */
+    public function getAccount($account_uuid) {
+        $result = $this->newAPIRequest('GET', '/account/'.$account_uuid);
+        return $result;
+    }
+
+
+    /**
+     * Fetch existing accounts with balances.
+     * This is the fastest and preferred way of obtaining balances for payment addresses managed by XChain.
+     * If type is not specified, the result looks like this
+     * {
+     *     "confirmed": {
+     *         "BTC": 10,
+     *         "TOKENLY": 4
+     *     },
+     *     "sending": [],
+     *     "unconfirmed": {
+     *         "BTC": 4
+     *     }
+     * }
+     * If type is specified, the result looks like this
+     * {
+     *     "BTC": 10,
+     *     "TOKENLY": 4
+     * }
+     * @param  string $payment_address_uuid the address id
+     * @param  string $account_name         An account name
+     * @param  string $type                 Only show balances of a specific type (unconfirmed, confirmed, sending)
+     * @return array                        An array of all active accounts with balances
+     */
+    public function getAccountBalances($payment_address_uuid, $account_name, $type=null) {
+        $params = ['name' => $account_name];
+        if ($type !== null) { $params['type'] == $type; }
+
+        $result = $this->newAPIRequest('GET', '/accounts/balances/'.$payment_address_uuid, $params);
+        if ($result) { return $result[0]['balances']; }
+
+        return $result;
+    }
+
+
+    /**
+     * Fetch existing accounts with balances
+     * An example result might look like this
+     * [
+     *     {
+     *         "id": "3c411819-ffb8-40a9-82f9-6805c95567c9",
+     *         "name": "myNewCarSavings",
+     *         "active": true,
+     *         "meta": {
+     *             "foo": "bar"
+     *         },
+     *         "balances": {
+     *             "confirmed": {
+     *                 "BTC": 10,
+     *                 "TOKENLY": 4
+     *             },
+     *             "unconfirmed": {
+     *                 "BTC": 4
+     *             },
+     *             "sending": []
+     *         }
+     *     },
+     * ]
+     * @param  string $payment_address_uuid the address id
+     * @return array                        An array of all active accounts with balances
+     */
+    public function getAllAccountsWithBalances($payment_address_uuid) {
+        $params = [];
+
+        $result = $this->newAPIRequest('GET', '/accounts/balances/'.$payment_address_uuid, $params);
+        return $result;
+    }
+
+
+    /**
+     * @return array                        An array of all active accounts with balances
+     */
+
+
+    /**
+     * Transfer funds from one account to another
+     * @param  string $payment_address_uuid the address id
+     * @param  string $from                 The name of the account to transfer from
+     * @param  string $to                   Account name to transfer to.  This account will be created if it does not exist.
+     * @param  float  $quantity             Quantity of the asset to transfer
+     * @param  string $asset                Asset name to transfer
+     * @param  string $txid                 To transfer unconfirmed funds, specify a transaction id
+     * @return array                        An empty array
+     */
+    public function transfer($payment_address_uuid, $from, $to, $quantity, $asset, $txid=null) {
+        $body = [
+            'from'     => $from,
+            'to'       => $to,
+            'quantity' => $quantity,
+            'asset'    => $asset,
+        ];
+
+        if ($txid !== null) { $body['txid'] = $txid; }
+
+        $result = $this->newAPIRequest('POST', '/accounts/transfer/'.$payment_address_uuid, $body);
+        return $result;
+    }
+
+    /**
+     * Transfer all funds from one account to another
+     * @param  string $payment_address_uuid the address id
+     * @param  string $from                 The name of the account to transfer from
+     * @param  string $to                   Account name to transfer to.  This account will be created if it does not exist.
+     * @param  string $txid                 To transfer unconfirmed funds, specify a transaction id
+     * @return array                        An empty array
+     */
+    public function closeAccount($payment_address_uuid, $from, $to, $txid=null) {
+        $body = [
+            'from'     => $from,
+            'to'       => $to,
+            'close'    => true,
+        ];
+
+        if ($txid !== null) { $body['txid'] = $txid; }
+
+        $result = $this->newAPIRequest('POST', '/accounts/transfer/'.$payment_address_uuid, $body);
+        return $result;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
 
     protected function newAPIRequest($method, $path, $data=[]) {
         $api_path = '/api/v1'.$path;
