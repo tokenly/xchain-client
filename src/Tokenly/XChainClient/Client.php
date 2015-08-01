@@ -2,10 +2,11 @@
 
 namespace Tokenly\XChainClient;
 
+use Exception;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
 use Tokenly\HmacAuth\Generator;
-use Exception;
+use Tokenly\XChainClient\Exception\XChainException;
 
 /**
 * XChain Client
@@ -95,15 +96,58 @@ class Client
 	}
 
     /**
-     * creates a new payment address
-     * @return array An array with an (string) id and (string) address
+     * sends confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  float  $fee                bitcoin fee
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the send information, including `txid`
      */
     public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null) {
+        return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', true, $fee, $dust_size, $request_id);
+    }
+
+    /**
+     * sends only confirmed funds from the given payment address
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  float  $fee                bitcoin fee
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
+     * @return array An array with the send information, including `txid`
+     */
+    public function sendConfirmed($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null) {
+        return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', false, $fee, $dust_size, $request_id);
+    }
+
+    /**
+     * sends confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  string $account            an account name to send from
+     * @param  bool   $unconfirmed        allow unconfirmed funds to be sent
+     * @param  float  $fee                bitcoin fee
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the send information, including `txid`
+     */
+    public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
             'sweep'       => false,
+            'unconfirmed' => $unconfirmed,
+            'account'     => $account,
         ];
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
@@ -112,6 +156,7 @@ class Client
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
     }
+
 
     /**
      * sends all assets and all BTC to a destination address
@@ -224,14 +269,14 @@ class Client
      * This is the fastest and preferred way of obtaining balances for payment addresses managed by XChain.
      * If type is not specified, the result looks like this
      * {
+     *     "unconfirmed": {
+     *         "BTC": 4
+     *     }
      *     "confirmed": {
      *         "BTC": 10,
      *         "TOKENLY": 4
      *     },
      *     "sending": [],
-     *     "unconfirmed": {
-     *         "BTC": 4
-     *     }
      * }
      * If type is specified, the result looks like this
      * {
@@ -245,7 +290,7 @@ class Client
      */
     public function getAccountBalances($payment_address_uuid, $account_name, $type=null) {
         $params = ['name' => $account_name];
-        if ($type !== null) { $params['type'] == $type; }
+        if ($type !== null) { $params['type'] = $type; }
 
         $result = $this->newAPIRequest('GET', '/accounts/balances/'.$payment_address_uuid, $params);
         if ($result) { return $result[0]['balances']; }
@@ -301,7 +346,7 @@ class Client
      * @param  float  $quantity             Quantity of the asset to transfer
      * @param  string $asset                Asset name to transfer
      * @param  string $txid                 To transfer unconfirmed funds, specify a transaction id
-     * @return array                        An empty array
+     * @return boolean                      true on success, false if funds are not available
      */
     public function transfer($payment_address_uuid, $from, $to, $quantity, $asset, $txid=null) {
         $body = [
@@ -313,6 +358,32 @@ class Client
 
         if ($txid !== null) { $body['txid'] = $txid; }
 
+        try {
+            $result = $this->newAPIRequest('POST', '/accounts/transfer/'.$payment_address_uuid, $body);
+        } catch (XChainException $e) {
+            // handle an INSUFFICIENT_FUNDS error
+            if ($e->getErrorName() == 'ERR_INSUFFICIENT_FUNDS') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Transfers all funds from one account to another that are tagged with a transaction ID
+     * @param  string $payment_address_uuid the address id
+     * @param  string $from                 The name of the account to transfer from
+     * @param  string $to                   Account name to transfer to.  This account will be created if it does not exist.
+     * @param  string $txid                 A transaction id
+     * @return array                        An empty array
+     */
+    public function transferAllByTransactionID($payment_address_uuid, $from, $to, $txid) {
+        $body = [
+            'from'     => $from,
+            'to'       => $to,
+            'txid'     => $txid,
+        ];
+
         $result = $this->newAPIRequest('POST', '/accounts/transfer/'.$payment_address_uuid, $body);
         return $result;
     }
@@ -322,20 +393,17 @@ class Client
      * @param  string $payment_address_uuid the address id
      * @param  string $from                 The name of the account to transfer from
      * @param  string $to                   Account name to transfer to.  This account will be created if it does not exist.
-     * @param  string $txid                 To transfer unconfirmed funds, specify a transaction id
-     * @return array                        An empty array
+     * @return boolean                      true on success
      */
-    public function closeAccount($payment_address_uuid, $from, $to, $txid=null) {
+    public function closeAccount($payment_address_uuid, $from, $to) {
         $body = [
             'from'     => $from,
             'to'       => $to,
             'close'    => true,
         ];
 
-        if ($txid !== null) { $body['txid'] = $txid; }
-
         $result = $this->newAPIRequest('POST', '/accounts/transfer/'.$payment_address_uuid, $body);
-        return $result;
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -369,6 +437,14 @@ class Client
                     $json = null;
                 }
                 if ($json and isset($json['message'])) {
+                    // throw an XChainException with the errorName
+                    if (isset($json['errorName'])) {
+                        $xchain_exception = new XChainException($json['message'], $code);
+                        $xchain_exception->setErrorName($json['errorName']);
+                        throw $xchain_exception;
+                    }
+
+                    // generic exception
                     throw new Exception($json['message'], $code);
                 }
             }
