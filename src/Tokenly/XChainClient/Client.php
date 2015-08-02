@@ -453,6 +453,12 @@ class Client
             throw $e;
         }
 
+        $code = $response->getStatusCode();
+        if ($code == 204) {
+            // empty content
+            return [];
+        }
+
         $json = $response->json();
         if (!is_array($json)) { throw new Exception("Unexpected response", 1); }
 
