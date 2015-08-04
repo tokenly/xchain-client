@@ -50,6 +50,19 @@ class MockBuilder
         $this->received_by_txid_map = [];
     }
 
+    public function importBalances($data) {
+        if (isset($data['balances'])) { $this->balances = $data['balances']; }
+        if (isset($data['balances_by_txid'])) { $this->balances_by_txid = $data['balances_by_txid']; }
+        if (isset($data['received_by_txid_map'])) { $this->received_by_txid_map = $data['received_by_txid_map']; }
+    }
+    public function exportBalances() {
+        return [
+            'balances'             => $this->balances,
+            'balances_by_txid'     => $this->balances_by_txid,
+            'received_by_txid_map' => $this->received_by_txid_map,
+        ];
+    }
+
     public function setOutputTransactionID($output_transaction_id) {
         $this->output_transaction_id = $output_transaction_id;
     }
