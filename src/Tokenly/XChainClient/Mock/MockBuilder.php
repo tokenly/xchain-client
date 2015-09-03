@@ -135,6 +135,8 @@ class MockBuilder
                             $this->debitBalance($quantity, $asset, $from, 'confirmed', $payment_address_id);
                             $this->creditBalance($quantity, $asset, $to, 'confirmed', $payment_address_id);
                         }
+                        $this->closeAccount($payment_address_id, $from);
+
                     } else if (isset($data['quantity'])) {
                         $this->debitBalance($data['quantity'], $data['asset'], $from, 'confirmed', $payment_address_id);
                         $this->creditBalance($data['quantity'], $data['asset'], $to, 'confirmed', $payment_address_id);
@@ -169,6 +171,23 @@ class MockBuilder
                 return $balances;
 
                 return [];
+            }
+
+            if (substr($path, 0, 10) == '/accounts/') {
+                $active = isset($data['active']) ? $data['active'] : 1;
+
+                $payment_address_id = $this->resolvePaymentAddressID(substr($path, 10));
+                $out = [];
+                foreach (array_keys($this->balances[$payment_address_id]) as $account_name) {
+                    $out[] = [
+                        'id'     => md5($account_name),
+                        'name'   => $account_name,
+                        'active' => true,
+                        'meta'   => [],
+                    ];
+                }
+
+                return $out;
             }
 
             throw new Exception("No sample method for $method $path", 1);
@@ -284,7 +303,7 @@ class MockBuilder
             if (!isset($this->balances[$payment_address_id][$account])) { $this->balances[$payment_address_id][$account] = []; }
             if (!isset($this->balances[$payment_address_id][$account][$type])) { $this->balances[$payment_address_id][$account][$type] = []; }
             if (!isset($this->balances[$payment_address_id][$account][$type][$asset])) { $this->balances[$payment_address_id][$account][$type][$asset] = 0; }
-            if ($quantity < 0 AND $this->balances[$payment_address_id][$account][$type][$asset] + $quantity < 0) {
+            if ($quantity < 0 AND round($this->balances[$payment_address_id][$account][$type][$asset] + $quantity, 8) < 0) {
                 $xchain_exception = new XChainException("Insufficient funds: tried to debit account {$type} {$account} {$quantity} {$asset} - but had only {$this->balances[$payment_address_id][$account][$type][$asset]}", 1);
                 $xchain_exception->setErrorName('ERR_INSUFFICIENT_FUNDS');
                 throw $xchain_exception;
@@ -296,11 +315,14 @@ class MockBuilder
         $payment_address_id = $this->resolvePaymentAddressID($raw_payment_address_id);
         if (isset($this->balances[$payment_address_id])) { return $this->balances[$payment_address_id]; }
         throw new Exception("No Balances Defined", 1);
-        ;
     }
     protected function resolvePaymentAddressID($payment_address_id) {
         if (isset($this->balances) AND isset($this->balances[$payment_address_id])) { return $payment_address_id; }
         return 'default';
+    }
+    protected function closeAccount($raw_payment_address_id, $account) {
+        $payment_address_id = $this->resolvePaymentAddressID($raw_payment_address_id);
+        unset($this->balances[$payment_address_id][$account]);
     }
 
 }
