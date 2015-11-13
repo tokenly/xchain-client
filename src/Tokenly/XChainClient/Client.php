@@ -157,6 +157,30 @@ class Client
         return $result;
     }
 
+    /**
+     * sends confirmed and unconfirmed BTC from the given payment address to multiple destinations
+     *
+     * @param  string $payment_address_id address uuid
+     * @param  array  $destinations       destination bitcoin addresses with values. In the form of [['address' => '1XXXXXXX1111', 'amount' => 0.001], ['address' => '1XXXXXXX2222', 'amount' => 0.005]]
+     * @param  string $account            an account name to send from
+     * @param  bool   $unconfirmed        allow unconfirmed funds to be sent
+     * @param  float  $fee                bitcoin fee
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the send information, including `txid`
+     */
+    public function sendBTCToMultipleDestinations($payment_address_id, $destinations, $account='default', $unconfirmed=false, $fee=null, $request_id=null) {
+        $body = [
+            'destinations' => $destinations,
+            'sweep'        => false,
+            'unconfirmed'  => $unconfirmed,
+            'account'      => $account,
+        ];
+        if ($fee !== null)        { $body['fee']       = $fee; }
+        if ($request_id !== null) { $body['requestId'] = $request_id; }
+
+        $result = $this->newAPIRequest('POST', '/multisends/'.$payment_address_id, $body);
+        return $result;
+    }
 
     /**
      * sends all assets and all BTC to a destination address
