@@ -430,6 +430,68 @@ class Client
         return true;
     }
 
+    /**
+     * check the number of primed UTXOs a given address has
+     * An example result might look like this
+     * {
+     *     "primedCount": 1,
+     *     "totalCount": 2,
+     *     "utxos": [
+     *         {
+     *             "txid": "1111111111111111111111111111111111111111111111111111111111110004",
+     *             "n": "0",
+     *             "amount": 15430,
+     *             "type": "confirmed",
+     *             "green": true
+     *         },
+     *         {
+     *             "txid": "1111111111111111111111111111111111111111111111111111111111110004",
+     *             "n": "1",
+     *             "amount": 3.0e-5,
+     *             "type": "unconfirmed",
+     *             "green": true
+     *         }
+     *     ]
+     * }
+     * @param  string $payment_address_uuid the address id
+     * @param  float $utxo_size the size of the primed UTXOs to check for
+     * @return array The API call result
+     */
+    public function checkPrimedUTXOs($payment_address_uuid, $utxo_size) {
+        $vars = [
+            'size' => $utxo_size,
+        ];
+
+        $result = $this->newAPIRequest('GET', '/primes/'.$payment_address_uuid, $vars);
+        return $result;
+    }
+
+    /**
+     * Transfers all funds from one account to another that are tagged with a transaction ID
+     * An example result might look like this
+     * {
+     *     "primedCount": 1,
+     *     "totalCount": 2,
+     *     "txid": "999999992e2981dd792c7a1b484e9d6a5a8a65355d121b8f014848421fe1b164",
+     *     "primed": true
+     * }
+     * @param  string $payment_address_uuid the address id
+     * @param  float $utxo_size the size of the primed UTXOs to create
+     * @param  integer $desired_count the number of primed UTXOs to create
+     * @param  float $fee bitcoin fee
+     * @return array The API call result
+     */
+    public function primeUTXOs($payment_address_uuid, $utxo_size, $desired_count, $fee=null) {
+        $body = [
+            'size'  => $utxo_size,
+            'count' => $desired_count,
+        ];
+        if ($fee !== null) { $body['fee'] = $fee; }
+
+        $result = $this->newAPIRequest('POST', '/primes/'.$payment_address_uuid, $body);
+        return $result;
+    }
+
     ////////////////////////////////////////////////////////////////////////
 
     protected function newAPIRequest($method, $path, $data=[]) {
