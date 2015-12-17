@@ -491,6 +491,45 @@ class Client
         $result = $this->newAPIRequest('POST', '/primes/'.$payment_address_uuid, $body);
         return $result;
     }
+    
+    /*
+    * Checks to see if a string is a valid bitcoin address
+    * @param string $address the BTC address
+    * @return array the API call result (result: boolean, is_mine: boolean)
+    */
+    public function validateAddress($address)
+    {
+		$result = $this->newAPIRequest('GET', '/validate/'.$address);
+		return $result;
+	}
+	
+	
+	/*
+	* Verifies a message signed with a bitcoin address
+	* @param string $address signers bitcoin address
+	* @param string $sig the cryptographic signature
+	* @param string $message the message to verify against
+	* @return array the API call result (result: boolean)
+	*/
+	public function verifyMessage($address, $sig, $message)
+	{
+		$body = ['sig' => $sig, 'message' => $message];
+		$result = $this->newAPIRequest('GET', '/message/verify/'.$address, $body);
+		return $result;
+	}
+	
+	/*
+	* Signs a message using a bitcoin address
+	* @param string $address bitcoin address or uuid
+	* @param string $message the message
+	* @return array the API call result (result: string)
+	*/
+	public function signMessage($address, $message)
+	{
+		$body = ['message' => $message];
+		$result = $this->newAPIRequest('POST', '/message/sign/'.$address, $body);
+		return $result;
+	}
 
     ////////////////////////////////////////////////////////////////////////
 
