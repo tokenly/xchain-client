@@ -536,17 +536,21 @@ class Client
     protected function newAPIRequest($method, $path, $data=[]) {
         $api_path = '/api/v1'.$path;
 
-        $client = new GuzzleClient(['base_url' => $this->xchain_url,]);
+        $client = new GuzzleClient();
 
-        $request = $client->createRequest($method, $api_path);
         if ($data AND ($method == 'POST' OR $method == 'PATCH')) {
-            $request = $client->createRequest($method, $api_path, ['json' => $data]);
+            $body = \GuzzleHttp\Psr7\stream_for(json_encode($data));
+            $headers = ['Content-Type' => 'application/json'];
+            $request = new \GuzzleHttp\Psr7\Request($method, $this->xchain_url.$api_path, $headers, $body);
         } else if ($method == 'GET') {
-            $request = $client->createRequest($method, $api_path, ['query' => $data]);
+            $request = new \GuzzleHttp\Psr7\Request($method, $this->xchain_url.$api_path);
+            $request = \GuzzleHttp\Psr7\modify_request($request, ['query' => http_build_query($data, null, '&', PHP_QUERY_RFC3986)]);
+        } else {
+            $request = new \GuzzleHttp\Psr7\Request($method, $this->xchain_url.$api_path);
         }
 
         // add auth
-        $this->getAuthenticationGenerator()->addSignatureToGuzzleRequest($request, $this->api_token, $this->api_secret_key);
+        $request = $this->getAuthenticationGenerator()->addSignatureToGuzzle6Request($request, $this->api_token, $this->api_secret_key);
         
         // send request
         try {
@@ -556,7 +560,7 @@ class Client
                 // interpret the response and error message
                 $code = $response->getStatusCode();
                 try {
-                    $json = $response->json();
+                    $json = json_decode($response->getBody(), true);
                 } catch (Exception $parse_json_exception) {
                     // could not parse json
                     $json = null;
@@ -584,7 +588,7 @@ class Client
             return [];
         }
 
-        $json = $response->json();
+        $json = json_decode($response->getBody(), true);
         if (!is_array($json)) { throw new Exception("Unexpected response", 1); }
 
         return $json;
