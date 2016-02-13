@@ -13,7 +13,7 @@
     "require": {
         "php": ">=5.5.0",
         "guzzlehttp/guzzle": "~5",
-        "tokenly/hmac-auth": "dev-master"
+        "tokenly/hmac-auth": "0.1.*"
     },
     "require-dev": {
         "phpunit/phpunit": "~4",
