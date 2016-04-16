@@ -190,6 +190,10 @@ class MockBuilder
                 return $out;
             }
 
+            if (substr($path, 0, 13) == '/estimatefee/') {
+                return $this->sampleData_estimatefee($data);
+            }
+
             throw new Exception("No sample method for $method $path", 1);
         }));
 
@@ -288,6 +292,23 @@ class MockBuilder
                 'SOUP'    => 5000 * 100000000,
             ],
         ];
+    }
+
+    public function sampleData_estimatefee($data) {
+        return [
+            'fees' => [
+                'low'     => 1.3200000000000001E-5,
+                'lowSat'  => 1320,
+                'med'     => 0.0001,
+                'medSat'  => 10000,
+                'high'    => 0.00010823999999999999,
+                'highSat' => 10824,
+            ],
+            'size' => 264,
+        ];
+
+
+
     }
 
 

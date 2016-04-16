@@ -546,7 +546,7 @@ class Client
      * @return array                      An array with the send information, including `txid`
      */
     public function estimateFee($priority, $payment_address_id, $destination, $quantity, $asset, $dust_size=null) {
-        return $this->estimateFeeFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', true, $dust_size);
+        return $this->estimateFeeFromAccount($priority, $payment_address_id, $destination, $quantity, $asset, 'default', true, $dust_size);
     }
 
     /**
