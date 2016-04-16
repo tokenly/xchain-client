@@ -537,13 +537,13 @@ class Client
     /**
      * estimates the fee for sending confirmed and unconfirmed funds from the given payment address
      * confirmed funds are sent first if they are available
-     * @param  mixed $priority           priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
-     * @param  string $payment_address_id address uuid
-     * @param  string $destination        destination bitcoin address
-     * @param  float  $quantity           quantity to send
-     * @param  string $asset              asset name to send
-     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
-     * @return array                      An array with the send information, including `txid`
+     * @param  mixed $priority              priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
+     * @param  string $payment_address_id   address uuid
+     * @param  string $destination          destination bitcoin address
+     * @param  float  $quantity             quantity to send
+     * @param  string $asset                asset name to send
+     * @param  float  $dust_size            bitcoin transaction dust size for counterparty transactions
+     * @return Tokenly\CurrencyLib\Quantity The fee as a Quantity object.
      */
     public function estimateFee($priority, $payment_address_id, $destination, $quantity, $asset, $dust_size=null) {
         return $this->estimateFeeFromAccount($priority, $payment_address_id, $destination, $quantity, $asset, 'default', true, $dust_size);
