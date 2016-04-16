@@ -5,6 +5,7 @@ namespace Tokenly\XChainClient;
 use Exception;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
+use Tokenly\CurrencyLib\Quantity;
 use Tokenly\HmacAuth\Generator;
 use Tokenly\XChainClient\Exception\XChainException;
 
@@ -530,6 +531,57 @@ class Client
 		$result = $this->newAPIRequest('POST', '/message/sign/'.$address, $body);
 		return $result;
 	}
+
+
+
+    /**
+     * estimates the fee for sending confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  mixed $priority           priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @return array                      An array with the send information, including `txid`
+     */
+    public function estimateFee($priority, $payment_address_id, $destination, $quantity, $asset, $dust_size=null) {
+        return $this->estimateFeeFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', true, $dust_size);
+    }
+
+    /**
+     * estimates the fee for sending funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  mixed $priority              priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
+     * @param  string $payment_address_id   address uuid
+     * @param  string $destination          destination bitcoin address
+     * @param  float  $quantity             quantity to send
+     * @param  string $asset                asset name to send
+     * @param  string $account              an account name to send from
+     * @param  bool   $unconfirmed          allow unconfirmed funds to be sent
+     * @param  float  $dust_size            bitcoin transaction dust size for counterparty transactions
+     * @return Tokenly\CurrencyLib\Quantity The fee as a Quantity object.
+     */
+    public function estimateFeeFromAccount($priority, $payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $dust_size=null) {
+        $body = [
+            'destination' => $destination,
+            'quantity'    => $quantity,
+            'asset'       => $asset,
+            'sweep'       => false,
+            'unconfirmed' => $unconfirmed,
+            'account'     => $account,
+        ];
+        if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
+
+        $result = $this->newAPIRequest('POST', '/estimatefee/'.$payment_address_id, $body);
+        if (isset($result['fees'][$priority])) {
+            return new Quantity($result['fees'][$priority.'Sat']);
+        }
+
+        return new Quantity(intval($priority) * $result['size']);
+    }
+
+
 
     ////////////////////////////////////////////////////////////////////////
 
