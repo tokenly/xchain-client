@@ -13,7 +13,7 @@
     "require": {
         "php": ">=5.5.0",
         "guzzlehttp/guzzle": "~6",
-        "tokenly/hmac-auth": "^0.2",
+        "tokenly/hmac-auth": "^1",
         "tokenly/bitcoin-currency-lib": "^1.1"
     },
     "require-dev": {
