@@ -106,10 +106,11 @@ class Client
      * @param  float  $fee                bitcoin fee
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
+     * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format {txid: id, n: 0}* 
      * @return array                      An array with the send information, including `txid`
      */
-    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null) {
-        return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', true, $fee, $dust_size, $request_id);
+    public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
+        return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', true, $fee, $dust_size, $request_id, $custom_inputs);
     }
 
     /**
@@ -141,7 +142,7 @@ class Client
      * @param  string $request_id         a unique id for this request
      * @return array                      An array with the send information, including `txid`
      */
-    public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null) {
+    public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
@@ -149,6 +150,7 @@ class Client
             'sweep'       => false,
             'unconfirmed' => $unconfirmed,
             'account'     => $account,
+            'custom_inputs'     => $custom_inputs,
         ];
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
