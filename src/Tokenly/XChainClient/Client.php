@@ -585,6 +585,24 @@ class Client
     }
 
 
+    /**
+     * estimates the fee for sending confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_uuid address uuid
+     * @param  int    $max_utxos            quantity to send
+     * @param  mixed  $priority             Fee priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
+     * @return array Response data like ['before_utxos_count' => 20, 'after_utxos_count'  => 10, 'cleaned_up' => true, 'txid' => $txid,]
+     */
+    public function cleanupUTXOs($payment_address_uuid, $max_utxos, $priority=null) {
+        $body = [
+            'max_utxos' => $max_utxos,
+        ];
+        if ($priority !== null)  { $body['priority'] = $priority; }
+
+        $result = $this->newAPIRequest('POST', '/cleanup/'.$payment_address_uuid, $body);
+        return $result;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////
 
