@@ -106,7 +106,7 @@ class Client
      * @param  float  $fee                bitcoin fee
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
-     * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format {txid: id, n: 0}* 
+     * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
      * @return array                      An array with the send information, including `txid`
      */
     public function send($payment_address_id, $destination, $quantity, $asset, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
@@ -140,6 +140,7 @@ class Client
      * @param  float  $fee                bitcoin fee
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
+     * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
      * @return array                      An array with the send information, including `txid`
      */
     public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
