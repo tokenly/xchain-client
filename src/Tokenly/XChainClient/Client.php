@@ -589,13 +589,13 @@ class Client
      * estimates the fee for sending confirmed and unconfirmed funds from the given payment address
      * confirmed funds are sent first if they are available
      * @param  string $payment_address_uuid address uuid
-     * @param  int    $max_utxos            quantity to send
-     * @param  mixed  $priority             Fee priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
+     * @param  int    $utxos_to_consolidate  The maximum number of UTXOs to consolidate unto a single UTXO.  Can be up to 150.
+     * @param  mixed  $priority              Fee priority to estimate.  Either low, med, high or a number.  If using a number, the number is the number of satoshis per byte.
      * @return array Response data like ['before_utxos_count' => 20, 'after_utxos_count'  => 10, 'cleaned_up' => true, 'txid' => $txid,]
      */
-    public function cleanupUTXOs($payment_address_uuid, $max_utxos, $priority=null) {
+    public function cleanupUTXOs($payment_address_uuid, $utxos_to_consolidate, $priority=null) {
         $body = [
-            'max_utxos' => $max_utxos,
+            'max_utxos' => $utxos_to_consolidate,
         ];
         if ($priority !== null)  { $body['priority'] = $priority; }
 
