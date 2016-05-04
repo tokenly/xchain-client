@@ -32,6 +32,20 @@ class Client
     }
 
     /**
+     * creates a new payment address that XChain will track
+     * But XChain does not hold the private key for this address
+     * @param  string  $address   bitcoin/counterparty address
+     * @return array An array with an (string) id and the (string) address
+     */
+    public function newUnmanagedPaymentAddress($address) {
+        $result = $this->newAPIRequest('POST', '/unmanaged/addresses', [
+            'address' => $address,
+        ]);
+        return $result;
+    }
+
+
+    /**
      * get the payment address details
      * @param  string $uuid id of the paymehnt address
      * @return array  array of payment address details
