@@ -194,6 +194,14 @@ class MockBuilder
                 return $this->sampleData_estimatefee($data);
             }
 
+            if (substr($path, 0, 20) == '/unmanaged/addresses') {
+                return [
+                    'address' => $data['address'],
+                    'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-111111111111'
+                ];
+            }
+
+
             throw new Exception("No sample method for $method $path", 1);
         }));
 
