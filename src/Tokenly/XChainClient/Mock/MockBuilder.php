@@ -200,6 +200,10 @@ class MockBuilder
                     'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-111111111111'
                 ];
             }
+            
+            if (substr($path, 0, 16) == '/message/verify/'){
+                return $this->sampleData_verifyMessage($data);
+            }            
 
 
             throw new Exception("No sample method for $method $path", 1);
@@ -318,6 +322,11 @@ class MockBuilder
 
 
     }
+    
+    public function sampleData_verifyMessage($data)
+    {
+        return ['result' => true];
+    }    
 
 
     protected function creditBalance($quantity, $asset, $account='default', $type='confirmed', $payment_address_id='default') {
