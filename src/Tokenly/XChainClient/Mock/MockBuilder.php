@@ -206,6 +206,11 @@ class MockBuilder
             }            
 
 
+            // handle delete message with an empty array
+            if ($method == 'DELETE') {
+                return [];
+            }
+
             throw new Exception("No sample method for $method $path", 1);
         }));
 

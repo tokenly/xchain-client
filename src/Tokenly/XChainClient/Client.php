@@ -56,6 +56,16 @@ class Client
     }
 
     /**
+     * destroys the payment address
+     * @param  string $uuid id of the paymehnt address
+     * @return array  an empty array
+     */
+    public function destroyPaymentAddress($uuid) {
+        $result = $this->newAPIRequest('DELETE', '/addresses/'.$uuid);
+        return $result;
+    }
+
+    /**
      * monitor a new address
      * @param  string  $address          bitcoin/counterparty address
      * @param  string  $webhook_endpoint webhook callback URL
