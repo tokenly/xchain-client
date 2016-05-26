@@ -206,6 +206,11 @@ class MockBuilder
             }            
 
 
+            if (substr($path, 0, 14) == '/message/sign/'){
+                return $this->sampleData_signMessage(substr($path, 14));
+            }
+
+
             // handle delete message with an empty array
             if ($method == 'DELETE') {
                 return [];
@@ -332,6 +337,11 @@ class MockBuilder
     {
         return ['result' => true];
     }    
+
+    public function sampleData_signMessage($address)
+    {
+        return ['result' => '9222deadbeef22299222deadbeef2229'];
+    }
 
 
     protected function creditBalance($quantity, $asset, $account='default', $type='confirmed', $payment_address_id='default') {
