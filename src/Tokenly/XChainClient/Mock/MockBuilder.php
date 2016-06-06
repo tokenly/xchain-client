@@ -4,6 +4,8 @@ namespace Tokenly\XChainClient\Mock;
 
 use Exception;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\XChainClient\Exception\XChainException;
 use Tokenly\XChainClient\Mock\MockTestCase;
@@ -40,6 +42,11 @@ class MockBuilder
         $this->test_exception_ignore_xchain_call_prefixes = null;
     }
 
+
+    public function setBalancesByAddress($balances_by_address) {
+        $this->balances_by_address = $balances_by_address;
+    }
+
     public function setBalances($balances, $payment_address_id='default') {
         if (!isset($this->balances)) { $this->balances = []; }
         $this->balances[$payment_address_id] = $balances;
@@ -68,6 +75,19 @@ class MockBuilder
     }
 
     public function installXChainMockClient(PHPUnit_Framework_TestCase $test_case=null) {
+        list($xchain_client_mock, $xchain_recorder) = $this->buildXChainMockAndRecorder($test_case);
+
+        // install the xchain client into the DI container
+        $this->app->bind('Tokenly\XChainClient\Client', function($app) use ($xchain_client_mock) {
+            return $xchain_client_mock;
+        });
+
+
+        // return an object to check the calls
+        return $xchain_recorder;
+    }
+
+    public function buildXChainMockAndRecorder(PHPUnit_Framework_TestCase $test_case=null) {
         // record the calls
         $xchain_recorder = new \stdClass();
         $xchain_recorder->calls = [];
@@ -85,148 +105,151 @@ class MockBuilder
 
         // override the newAPIRequest method
         $xchain_client_mock->method('newAPIRequest')->will($test_case->returnCallback(function($method, $path, $data) use ($xchain_recorder) {
-            if ($this->requests_remainning_before_throwing_exception !== null AND !$this->pathIsIgnored($path, $this->test_exception_ignore_xchain_call_prefixes)) {
-                if ($this->requests_remainning_before_throwing_exception <= 0) {
-                    throw new Exception("Test Exception Triggered", 1);
+            try {
+                if ($this->requests_remainning_before_throwing_exception !== null AND !$this->pathIsIgnored($path, $this->test_exception_ignore_xchain_call_prefixes)) {
+                    if ($this->requests_remainning_before_throwing_exception <= 0) {
+                        throw new Exception("Test Exception Triggered", 1);
+                    }
+                    --$this->requests_remainning_before_throwing_exception;
+                    if ($this->requests_remainning_before_throwing_exception < 0) { $this->requests_remainning_before_throwing_exception = 0; }
                 }
-                --$this->requests_remainning_before_throwing_exception;
-                if ($this->requests_remainning_before_throwing_exception < 0) { $this->requests_remainning_before_throwing_exception = 0; }
-            }
 
-            // store the method for test verification
-            $xchain_recorder->calls[] = [
-                'method' => $method,
-                'path'   => $path,
-                'data'   => $data,
-            ];
+                // store the method for test verification
+                $call_data = [
+                    'method' => $method,
+                    'path'   => $path,
+                    'data'   => $data,
+                ];
+                $xchain_recorder->calls[] = $call_data;
+                Event::fire('xchainMock.callBegin', [$call_data]);
 
-            // call a method that returns sample data
-            $sample_method_name = 'sampleData_'.strtolower($method).'_'.preg_replace('![^a-z0-9]+!i', '_', trim($path, '/'));
-            if (method_exists($this, $sample_method_name)) {
-                return call_user_func([$this, $sample_method_name], $data);
-            }
+                // call a method that returns sample data
+                $sample_method_name = 'sampleData_'.strtolower($method).'_'.preg_replace('![^a-z0-9]+!i', '_', trim($path, '/'));
+                if (method_exists($this, $sample_method_name)) {
+                    return $this->returnMockResult(call_user_func([$this, $sample_method_name], $data), $call_data);
+                }
 
-            // defaults
-            if (substr($path, 0, 7) == '/sends/') {
-                $account = isset($data['account']) ? $data['account'] : 'default';
-                $payment_address_id = substr($path, 7);
-                $this->debitBalance($data['quantity'], $data['asset'], $account, 'confirmed', $payment_address_id);
+                // defaults
+                if (substr($path, 0, 7) == '/sends/') {
+                    $account = isset($data['account']) ? $data['account'] : 'default';
+                    $payment_address_id = substr($path, 7);
+                    $this->debitBalance($data['quantity'], $data['asset'], $account, 'confirmed', $payment_address_id);
 
-                $btc_debit = (isset($data['fee']) ? $data['fee'] : self::DEFAULT_FEE_SIZE);
-                if ($data['asset'] != 'BTC') { $btc_debit += (isset($data['dust_size']) ? $data['dust_size'] : self::DEFAULT_REGULAR_DUST_SIZE); }
-                $this->debitBalance($btc_debit, 'BTC', $account, 'confirmed', $payment_address_id);
+                    $btc_debit = (isset($data['fee']) ? $data['fee'] : self::DEFAULT_FEE_SIZE);
+                    if ($data['asset'] != 'BTC') { $btc_debit += (isset($data['dust_size']) ? $data['dust_size'] : self::DEFAULT_REGULAR_DUST_SIZE); }
+                    $this->debitBalance($btc_debit, 'BTC', $account, 'confirmed', $payment_address_id);
 
-                return $this->sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data);
-            }
-            if (substr($path, 0, 10) == '/balances/') {
-                return $this->sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data);
-            }
-            if (substr($path, 0, 19) == '/accounts/transfer/') {
-                try {
-                    $from = isset($data['from']) ? $data['from'] : null;
-                    $to = isset($data['to']) ? $data['to'] : null;
-                    $payment_address_id = substr($path, 19);
-                    if (!$from OR !$to) { throw new Exception("from or to account missing", 1); }
-                    if (isset($data['close']) AND $data['close']) {
-                        // close account
-                        $balances = $this->findBalances($payment_address_id);
-                        if (!$balances OR !isset($balances[$from]) OR !isset($balances[$from]['confirmed'])) { throw new Exception("No balances for $from", 1); }
-                        foreach ($balances[$from]['confirmed'] as $asset => $quantity) {
-                            $this->debitBalance($quantity, $asset, $from, 'confirmed', $payment_address_id);
-                            $this->creditBalance($quantity, $asset, $to, 'confirmed', $payment_address_id);
-                        }
-                        $this->closeAccount($payment_address_id, $from);
+                    return $this->returnMockResult($this->sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data), $call_data);
+                }
+                if (substr($path, 0, 10) == '/balances/') {
+                    return $this->returnMockResult($this->sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data, substr($call_data['path'], 10)), $call_data);
+                }
+                if (substr($path, 0, 19) == '/accounts/transfer/') {
+                    try {
+                        $from = isset($data['from']) ? $data['from'] : null;
+                        $to = isset($data['to']) ? $data['to'] : null;
+                        $payment_address_id = substr($path, 19);
+                        if (!$from OR !$to) { throw new Exception("from or to account missing", 1); }
+                        if (isset($data['close']) AND $data['close']) {
+                            // close account
+                            $balances = $this->findBalances($payment_address_id);
+                            if (!$balances OR !isset($balances[$from]) OR !isset($balances[$from]['confirmed'])) { throw new Exception("No balances for $from", 1); }
+                            foreach ($balances[$from]['confirmed'] as $asset => $quantity) {
+                                $this->debitBalance($quantity, $asset, $from, 'confirmed', $payment_address_id);
+                                $this->creditBalance($quantity, $asset, $to, 'confirmed', $payment_address_id);
+                            }
+                            $this->closeAccount($payment_address_id, $from);
 
-                    } else if (isset($data['quantity'])) {
-                        $this->debitBalance($data['quantity'], $data['asset'], $from, 'confirmed', $payment_address_id);
-                        $this->creditBalance($data['quantity'], $data['asset'], $to, 'confirmed', $payment_address_id);
-                    } else if (isset($data['txid'])) {
-                        $txid = $data['txid'];
-                        if (isset($this->balances_by_txid[$txid])) {
-                            foreach ($this->balances_by_txid[$txid] as $txid_asset => $txid_quantity) {
-                                $this->debitBalance($txid_quantity, $txid_asset, $from, 'confirmed', $payment_address_id);
-                                $this->creditBalance($txid_quantity, $txid_asset, $to, 'confirmed', $payment_address_id);
+                        } else if (isset($data['quantity'])) {
+                            $this->debitBalance($data['quantity'], $data['asset'], $from, 'confirmed', $payment_address_id);
+                            $this->creditBalance($data['quantity'], $data['asset'], $to, 'confirmed', $payment_address_id);
+                        } else if (isset($data['txid'])) {
+                            $txid = $data['txid'];
+                            if (isset($this->balances_by_txid[$txid])) {
+                                foreach ($this->balances_by_txid[$txid] as $txid_asset => $txid_quantity) {
+                                    $this->debitBalance($txid_quantity, $txid_asset, $from, 'confirmed', $payment_address_id);
+                                    $this->creditBalance($txid_quantity, $txid_asset, $to, 'confirmed', $payment_address_id);
+                                }
                             }
                         }
+
+                        // success
+                        return $this->returnMockResult([], $call_data);
+                    } catch (XChainException $e) {
+                        $decorated_e = new XChainException("Failed transferring: ".json_encode($data, 192)."\n".$e->getMessage(), $e->getCode());
+                        $decorated_e->setErrorName($e->getErrorName());
+                        throw $decorated_e;
                     }
 
-                    // success
-                    return [];                    
-                } catch (XChainException $e) {
-                    $decorated_e = new XChainException("Failed transferring: ".json_encode($data, 192)."\n".$e->getMessage(), $e->getCode());
-                    $decorated_e->setErrorName($e->getErrorName());
-                    throw $decorated_e;
+                }
+                if (substr($path, 0, 19) == '/accounts/balances/') {
+                    $name = isset($data['name']) ? $data['name'] : null;
+                    $type = isset($data['type']) ? $data['type'] : null;
+                    if ($name) {
+                        $payment_address_id = substr($path, 19);
+                        $balances = $this->findBalances($payment_address_id);
+                        if ($type) { return $this->returnMockResult((isset($balances[$name]) AND isset($balances[$name][$type])) ? [['balances' => $balances[$name][$type]]] : [], $call_data); }
+                        return $this->returnMockResult(isset($balances[$name]) ? [['balances' => $balances[$name]]] : [], $call_data);
+                    }
+                    return $this->returnMockResult($balances, $call_data);
                 }
 
-            }
-            if (substr($path, 0, 19) == '/accounts/balances/') {
-                $name = isset($data['name']) ? $data['name'] : null;
-                $type = isset($data['type']) ? $data['type'] : null;
-                if ($name) {
-                    $payment_address_id = substr($path, 19);
-                    $balances = $this->findBalances($payment_address_id);
-                    if ($type) { return (isset($balances[$name]) AND isset($balances[$name][$type])) ? [['balances' => $balances[$name][$type]]] : []; }
-                    return isset($balances[$name]) ? [['balances' => $balances[$name]]] : [];
-                }
-                return $balances;
+                if (substr($path, 0, 10) == '/accounts/') {
+                    $active = isset($data['active']) ? $data['active'] : 1;
 
-                return [];
-            }
+                    $payment_address_id = $this->resolvePaymentAddressID(substr($path, 10));
+                    $out = [];
+                    foreach (array_keys($this->balances[$payment_address_id]) as $account_name) {
+                        $out[] = [
+                            'id'     => md5($account_name),
+                            'name'   => $account_name,
+                            'active' => true,
+                            'meta'   => [],
+                        ];
+                    }
 
-            if (substr($path, 0, 10) == '/accounts/') {
-                $active = isset($data['active']) ? $data['active'] : 1;
-
-                $payment_address_id = $this->resolvePaymentAddressID(substr($path, 10));
-                $out = [];
-                foreach (array_keys($this->balances[$payment_address_id]) as $account_name) {
-                    $out[] = [
-                        'id'     => md5($account_name),
-                        'name'   => $account_name,
-                        'active' => true,
-                        'meta'   => [],
-                    ];
+                    return $this->returnMockResult($out, $call_data);
                 }
 
-                return $out;
+                if (substr($path, 0, 13) == '/estimatefee/') {
+                    return $this->returnMockResult($this->sampleData_estimatefee($data), $call_data);
+                }
+
+                if (substr($path, 0, 20) == '/unmanaged/addresses') {
+                    return $this->returnMockResult([
+                        'address' => $data['address'],
+                        'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-'.substr(md5($data['address']), 0, 12),
+                    ], $call_data);
+                }
+                
+                if (substr($path, 0, 16) == '/message/verify/'){
+                    return $this->returnMockResult($this->sampleData_verifyMessage($data), $call_data);
+                }            
+
+                if (substr($path, 0, 10) == '/validate/'){
+                    return $this->returnMockResult($this->sampleData_validate(substr($path, 10)), $call_data);
+                }            
+
+
+                if (substr($path, 0, 14) == '/message/sign/'){
+                    return $this->sampleData_signMessage(substr($path, 14));
+                }
+
+
+                // handle delete message with an empty array
+                if ($method == 'DELETE') {
+                    return $this->returnMockResult([], $call_data);
+                }
+
+                Log::debug("No sample method for $method $path ".json_encode($data));
+                throw new Exception("No sample method for $method $path", 1);
+            } catch (Exception $e) {
+                Log::error("XChain Mock ".get_class($e)." at ".$e->getFile().":".$e->getLine().": ".$e->getMessage()."\n".$e->getTraceAsString());
+                throw $e;
             }
-
-            if (substr($path, 0, 13) == '/estimatefee/') {
-                return $this->sampleData_estimatefee($data);
-            }
-
-            if (substr($path, 0, 20) == '/unmanaged/addresses') {
-                return [
-                    'address' => $data['address'],
-                    'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-111111111111'
-                ];
-            }
-            
-            if (substr($path, 0, 16) == '/message/verify/'){
-                return $this->sampleData_verifyMessage($data);
-            }            
-
-
-            if (substr($path, 0, 14) == '/message/sign/'){
-                return $this->sampleData_signMessage(substr($path, 14));
-            }
-
-
-            // handle delete message with an empty array
-            if ($method == 'DELETE') {
-                return [];
-            }
-
-            throw new Exception("No sample method for $method $path", 1);
         }));
 
-        // install the xchain client into the DI container
-        $this->app->bind('Tokenly\XChainClient\Client', function($app) use ($xchain_client_mock) {
-            return $xchain_client_mock;
-        });
-
-
-        // return an object to check the calls
-        return $xchain_recorder;
+        return [$xchain_client_mock, $xchain_recorder];
     }
 
     public function receive($notification) {
@@ -301,18 +324,25 @@ class MockBuilder
             "is_sweep"    => !!$data['sweep'],
         ];
     }
-    public function sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data) {
-        return [
-            'balances' => [
+    public function sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data, $address) {
+        if (isset($this->balances_by_address) AND isset($this->balances_by_address[$address])) {
+            $float_balances = $this->balances_by_address[$address];
+        } else {
+            $float_balances = [
                 'BTC'     => 0.01,
                 'LTBCOIN' => 1000,
                 'SOUP'    => 5000,
-            ],
-            'balancesSat' => [
-                'BTC'     => 0.01 * 100000000,
-                'LTBCOIN' => 1000 * 100000000,
-                'SOUP'    => 5000 * 100000000,
-            ],
+            ];
+        }
+
+        $satoshi_balances = [];
+        foreach($float_balances as $token => $float_balance) {
+            $satoshi_balances[$token] = CurrencyUtil::valueToSatoshis($float_balance);
+        }
+
+        return [
+            'balances'    => $float_balances,
+            'balancesSat' => $satoshi_balances,
         ];
     }
 
@@ -343,6 +373,12 @@ class MockBuilder
         return ['result' => '9222deadbeef22299222deadbeef2229'];
     }
 
+
+    public function sampleData_validate($address)
+    {
+        Log::debug("\$address=".json_encode($address, 192));
+        return ['result' => \LinusU\Bitcoin\AddressValidator::isValid($address), 'is_mine' => false];
+    }    
 
     protected function creditBalance($quantity, $asset, $account='default', $type='confirmed', $payment_address_id='default') {
         $this->changeBalance($quantity, $asset, $account, $type, $payment_address_id);
@@ -376,6 +412,11 @@ class MockBuilder
     protected function closeAccount($raw_payment_address_id, $account) {
         $payment_address_id = $this->resolvePaymentAddressID($raw_payment_address_id);
         unset($this->balances[$payment_address_id][$account]);
+    }
+
+    protected function returnMockResult($return_value, $call_data) {
+        Event::fire('xchainMock.callEnd', [$return_value, $call_data]);
+        return $return_value;
     }
 
 }
