@@ -218,7 +218,7 @@ class MockBuilder
                 if (substr($path, 0, 20) == '/unmanaged/addresses') {
                     return $this->returnMockResult([
                         'address' => $data['address'],
-                        'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-'.substr(md5($data['address']), 0, 12),
+                        'id'      => 'xxxxxxxx-xxxx-4xxx-yaaa-'.substr(md5($data['address'].time()), 0, 12),
                     ], $call_data);
                 }
                 
@@ -305,12 +305,13 @@ class MockBuilder
         ];
     }
     public function sampleData_post_monitors($data) {
+        $mock_ending_6 = substr(md5($data['address'].$data['monitorType']), 0, 6);
         return [
-            "id"              => "xxxxxxxx-xxxx-4xxx-yxxx-222222222222",
+            "id"              => "xxxxxxxx-xxxx-4xxx-yxxx-222222{$mock_ending_6}",
             "active"          => true,
-            "address"         => "1oLaf1CoYcVE3aH5n5XeCJcaKPPGTxnxW",
-            "monitorType"     => "receive",
-            "webhookEndpoint" => "http://mywebsite.co/notifyme"
+            "address"         => $data['address'],
+            "monitorType"     => $data['monitorType'],
+            "webhookEndpoint" => $data['webhookEndpoint'],
         ];
     }
     public function sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data) {
@@ -365,6 +366,10 @@ class MockBuilder
     
     public function sampleData_verifyMessage($data)
     {
+        if ($data['sig'] == 'bad' OR !strlen($data['sig'])) {
+            return ['result' => false];
+        }
+
         return ['result' => true];
     }    
 
