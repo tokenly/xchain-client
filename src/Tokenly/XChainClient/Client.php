@@ -169,13 +169,13 @@ class Client
      */
     public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
         $body = [
-            'destination' => $destination,
-            'quantity'    => $quantity,
-            'asset'       => $asset,
-            'sweep'       => false,
-            'unconfirmed' => $unconfirmed,
-            'account'     => $account,
-            'custom_inputs'     => $custom_inputs,
+            'destination'   => $destination,
+            'quantity'      => $quantity,
+            'asset'         => $asset,
+            'sweep'         => false,
+            'unconfirmed'   => $unconfirmed,
+            'account'       => $account,
+            'utxo_override' => $custom_inputs,
         ];
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
