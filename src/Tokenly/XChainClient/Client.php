@@ -121,6 +121,58 @@ class Client
 	}
 
     /**
+     * monitor a new event
+     * @param  string  $webhook_endpoint  webhook callback URL
+     * @param  string  $event_type        an event type (block,issuance,broadcast)
+     * @return array                      The new monitor object
+     */
+    public function newEventMonitor($webhook_endpoint, $event_type) {
+        $body = [
+            'monitorType'     => $event_type,
+            'webhookEndpoint' => $webhook_endpoint,
+        ];
+        $result = $this->newAPIRequest('POST', '/event_monitors', $body);
+        return $result;
+    }
+    
+    /**
+     * Updates an event monitor
+     * @param string $id                the uuid of the event monitor
+     * @param boolean $active           active
+     * @return array                    monitor object
+     * */
+    public function updateEventMonitor($id, $webhook_endpoint, $event_type) {
+        $body = [
+            'monitorType'     => $event_type,
+            'webhookEndpoint' => $webhook_endpoint,
+        ];
+        $result = $this->newAPIRequest('PATCH', '/event_monitors/'.$id, $body);
+        return $result;
+    }
+    
+    /**
+     * get details about an event monitor
+     * @param string $id                the uuid of the event monitor
+     * @return array                    monitor object
+     * */   
+    public function getEventMonitor($id)
+    {
+        $result = $this->newAPIRequest('GET', '/event_monitors/'.$id, array());
+        return $result; 
+    }
+    
+    /**
+     * destroys an event monitor from the DB
+     * @param string $id                the uuid of the event monitor
+     * @return null
+     * */   
+    public function destroyEventMonitor($id)
+    {
+        $result = $this->newAPIRequest('DELETE', '/event_monitors/'.$id, array());
+        return $result; 
+    }
+
+    /**
      * sends confirmed and unconfirmed funds from the given payment address
      * confirmed funds are sent first if they are available
      * @param  string $payment_address_id address uuid
