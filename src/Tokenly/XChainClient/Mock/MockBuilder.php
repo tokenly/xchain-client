@@ -235,6 +235,10 @@ class MockBuilder
                     return $this->sampleData_signMessage(substr($path, 14));
                 }
 
+                if (substr($path, 0, 8) == '/assets/'){
+                    return $this->sampleData_asset(substr($path, 8));
+                }
+
 
                 // handle delete message with an empty array
                 if ($method == 'DELETE') {
@@ -243,6 +247,9 @@ class MockBuilder
 
                 Log::debug("No sample method for $method $path ".json_encode($data));
                 throw new Exception("No sample method for $method $path", 1);
+            } catch (XChainException $e) {
+                Log::debug("XChain Mock ".get_class($e)." at ".$e->getFile().":".$e->getLine().": ".$e->getMessage());
+                throw $e;
             } catch (Exception $e) {
                 Log::error("XChain Mock ".get_class($e)." at ".$e->getFile().":".$e->getLine().": ".$e->getMessage()."\n".$e->getTraceAsString());
                 throw $e;
@@ -384,6 +391,20 @@ class MockBuilder
         Log::debug("\$address=".json_encode($address, 192));
         return ['result' => \LinusU\Bitcoin\AddressValidator::isValid($address), 'is_mine' => false];
     }    
+
+    public function sampleData_asset($asset) {
+        if ($asset == 'NOTFOUND') { throw new XChainException("Asset Not found", 404); }
+
+        return [
+            'asset'       => 'TOKENLY',
+            'divisible'   => true,
+            'description' => 'Tokenly.co',
+            'locked'      => false,
+            'owner'       => '12717MBviQxttaBVhFGRP1LxD8X6CaW452',
+            'issuer'      => '12717MBviQxttaBVhFGRP1LxD8X6CaW452',
+            'supply'      => 10000000000000,
+        ];
+    }
 
     protected function creditBalance($quantity, $asset, $account='default', $type='confirmed', $payment_address_id='default') {
         $this->changeBalance($quantity, $asset, $account, $type, $payment_address_id);
