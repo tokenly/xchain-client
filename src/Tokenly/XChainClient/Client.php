@@ -301,7 +301,18 @@ class Client
      * */
     public function getAsset($asset)
     {
-		$result = $this->newAPIRequest('GET', '/assets/'.$asset);
+        $result = $this->newAPIRequest('GET', '/assets/'.$asset);
+        return $result;
+    }
+
+    /**
+     * gets info for a particular asset
+     * @param array $asset an array of counterparty asset
+     * @return array a numbered array with asset information
+     * */
+    public function getAssets($assets)
+    {
+		$result = $this->newAPIRequest('GET', '/assets?assets'.implode(',', $assets));
 		return $result;
 	}
 
