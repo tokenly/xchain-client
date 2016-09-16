@@ -312,7 +312,7 @@ class Client
      * */
     public function getAssets($assets)
     {
-		$result = $this->newAPIRequest('GET', '/assets?assets'.implode(',', $assets));
+        $result = $this->newAPIRequest('GET', '/assets', ['assets' => implode(',', $assets)]);
 		return $result;
 	}
 
