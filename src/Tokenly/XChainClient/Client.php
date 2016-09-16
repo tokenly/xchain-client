@@ -237,6 +237,39 @@ class Client
         return $result;
     }
 
+
+    /**
+     * sends confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  string $account            an account name to send from
+     * @param  bool   $unconfirmed        allow unconfirmed funds to be sent
+     * @param  float  $fee                bitcoin fee
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
+     * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
+     * @return array                      An array with the send information, including `txid`
+     */
+    public function createUnsignedSend($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
+        $body = [
+            'destination'   => $destination,
+            'quantity'      => $quantity,
+            'asset'         => $asset,
+            'unconfirmed'   => $unconfirmed,
+            'account'       => $account,
+            'utxo_override' => $custom_inputs,
+        ];
+        if ($fee !== null)        { $body['fee']       = $fee; }
+        if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
+        if ($request_id !== null) { $body['requestId'] = $request_id; }
+
+        $result = $this->newAPIRequest('POST', '/unsigned/sends/'.$payment_address_id, $body);
+        return $result;
+    }
+
     /**
      * sends confirmed and unconfirmed BTC from the given payment address to multiple destinations
      *
