@@ -65,6 +65,30 @@ class Client
         return $result;
     }
 
+
+    /**
+     * creates a new payment address that XChain will track
+     * But XChain does not hold the private key for this address
+     * @param  string  $wallet_name      The wallet name shown in Pockets
+     * @param  string  $multsig_typ      2of2 or 2of3
+     * @param  string  $webhook_endpoint webhook callback URL to receive the joined event callback
+     * @param  string  $copayer_name     The name of the cosigning application
+     * @return array An array with an (string) id and an (string) invitationCode for use in Pockets to join this address
+     */
+    public function newMultisigPaymentAddress($wallet_name, $multisig_type, $webhook_endpoint=null, $copayer_name=null) {
+        if (!in_array($multisig_type, ['2of2','2of3'])) { throw new Exception("Invalid multisig type", 1); }
+
+        $post_vars = [
+            'name'         => $wallet_name,
+            'multisigType' => $multisig_type,
+        ];
+        if ($webhook_endpoint !== null) { $post_vars['webhookEndpoint'] = $webhook_endpoint; }
+        if ($copayer_name !== null)     { $post_vars['copayerName']     = $copayer_name; }
+        $result = $this->newAPIRequest('POST', '/multisig/addresses', $post_vars);
+        return $result;
+    }
+
+
     /**
      * monitor a new address
      * @param  string  $address          bitcoin/counterparty address
