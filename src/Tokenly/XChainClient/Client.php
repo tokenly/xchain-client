@@ -96,21 +96,23 @@ class Client
      * @param  float  $quantity           quantity to send
      * @param  string $asset              asset name to send
      * @param  float  $fee_per_kb         bitcoin fee per kilobyte
+     * @param  string $message            message
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
      * @return array                      An array with the send information, including `id`
      */
-    public function sendFromMultisigAddress($payment_address_id, $destination, $quantity, $asset, $fee_per_kb=null, $dust_size=null, $request_id=null) {
+    public function sendFromMultisigAddress($payment_address_id, $destination, $quantity, $asset, $fee_per_kb=null, $message=null, $dust_size=null, $request_id=null) {
         if ($fee_per_kb === null) { $fee_per_kb = 0.0005; }
 
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
-            'fee_per_kb'  => $fee_per_kb,
+            'feePerKB'    => $fee_per_kb,
         ];
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
         if ($request_id !== null) { $body['requestId'] = $request_id; }
+        if ($message !== null)    { $body['message']   = $message; }
 
         $result = $this->newAPIRequest('POST', '/multisig/sends/'.$payment_address_id, $body);
         return $result;
@@ -123,7 +125,7 @@ class Client
      */   
     public function destroyMultisigSend($send_id)
     {
-        $result = $this->newAPIRequest('DELETE', '/multisig/sends/'.$id, array());
+        $result = $this->newAPIRequest('DELETE', '/multisig/sends/'.$send_id, array());
         return $result; 
     }
 
@@ -844,7 +846,7 @@ class Client
         }
 
         $json = json_decode($response->getBody(), true);
-        if (!is_array($json)) { throw new Exception("Unexpected response", 1); }
+        if (!is_array($json)) { throw new Exception("Unexpected response: ".$response->getBody(), 1); }
 
         return $json;
     }
