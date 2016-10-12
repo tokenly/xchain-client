@@ -88,6 +88,44 @@ class Client
         return $result;
     }
 
+    /**
+     * sends confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  float  $fee_per_kb         bitcoin fee per kilobyte
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the send information, including `id`
+     */
+    public function sendFromMultisigAddress($payment_address_id, $destination, $quantity, $asset, $fee_per_kb=null, $dust_size=null, $request_id=null) {
+        if ($fee_per_kb === null) { $fee_per_kb = 0.0005; }
+
+        $body = [
+            'destination' => $destination,
+            'quantity'    => $quantity,
+            'asset'       => $asset,
+            'fee_per_kb'  => $fee_per_kb,
+        ];
+        if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
+        if ($request_id !== null) { $body['requestId'] = $request_id; }
+
+        $result = $this->newAPIRequest('POST', '/multisig/sends/'.$payment_address_id, $body);
+        return $result;
+    }
+
+    /**
+     * destroys an address monitor from the DB
+     * @param string $send_id  the id from sendFromMultisigAddress
+     * @return array empty array
+     */   
+    public function destroyMultisigSend($send_id)
+    {
+        $result = $this->newAPIRequest('DELETE', '/multisig/sends/'.$id, array());
+        return $result; 
+    }
 
     /**
      * monitor a new address
