@@ -82,9 +82,24 @@ class MockBuilder
             return $xchain_client_mock;
         });
 
-
+        if(class_exists('\Mockery')){
+            $mock = \Mockery::mock('Tokenly\XChainClient\Client');
+            $mock->shouldReceive('newMultisigPaymentAddress')->andReturn($this->sampleData_multisigPaymentAddress());
+            app()->instance('Tokenly\XChainClient\Client', $mock);
+        }
         // return an object to check the calls
         return $xchain_recorder;
+    }
+    
+    public function sampleData_multisigPaymentAddress()
+    {
+        return [
+             "id" => "21b4d491-22a9-488a-8d28-b2ff873dbc1a",
+              "address" => "",
+              "type" => "p2sh",
+              "status" => "pending",
+              "invitationCode" => "Fenq762M2AHEBYUbnZGUweKxRocmqszNNZwzAWnj3ETR9Up3ThUPJqQ5vBq3f7eA2RL7obxoC6L",
+        ];
     }
 
     public function buildXChainMockAndRecorder(PHPUnit_Framework_TestCase $test_case=null) {
