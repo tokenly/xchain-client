@@ -82,11 +82,6 @@ class MockBuilder
             return $xchain_client_mock;
         });
 
-        if(class_exists('\Mockery')){
-            $mock = \Mockery::mock('Tokenly\XChainClient\Client');
-            $mock->shouldReceive('newMultisigPaymentAddress')->andReturn($this->sampleData_multisigPaymentAddress());
-            app()->instance('Tokenly\XChainClient\Client', $mock);
-        }
         // return an object to check the calls
         return $xchain_recorder;
     }
@@ -94,11 +89,11 @@ class MockBuilder
     public function sampleData_multisigPaymentAddress()
     {
         return [
-             "id" => "21b4d491-22a9-488a-8d28-b2ff873dbc1a",
-              "address" => "",
-              "type" => "p2sh",
-              "status" => "pending",
-              "invitationCode" => "Fenq762M2AHEBYUbnZGUweKxRocmqszNNZwzAWnj3ETR9Up3ThUPJqQ5vBq3f7eA2RL7obxoC6L",
+             "id"             => "21b4d491-22a9-488a-8d28-b2ff873dbc1a",
+             "address"        => "",
+             "type"           => "p2sh",
+             "status"         => "pending",
+             "invitationCode" => "Fenq762M2AHEBYUbnZGUweKxRocmqszNNZwzAWnj3ETR9Up3ThUPJqQ5vBq3f7eA2RL7obxoC6L",
         ];
     }
 
@@ -252,6 +247,10 @@ class MockBuilder
 
                 if (substr($path, 0, 8) == '/assets/'){
                     return $this->sampleData_asset(substr($path, 8));
+                }
+
+                if (substr($path, 0, 20) == '/multisig/addresses/'){
+                    return $this->sampleData_multisigPaymentAddress(substr($path, 20));
                 }
 
 
