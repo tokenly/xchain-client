@@ -249,8 +249,8 @@ class MockBuilder
                     return $this->sampleData_asset(substr($path, 8));
                 }
 
-                if (substr($path, 0, 20) == '/multisig/addresses/'){
-                    return $this->sampleData_multisigPaymentAddress(substr($path, 20));
+                if (substr($path, 0, 19) == '/multisig/addresses'){
+                    return $this->sampleData_multisigPaymentAddress(substr($path, 19));
                 }
 
 
