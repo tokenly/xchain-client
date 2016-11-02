@@ -130,6 +130,22 @@ class Client
     }
 
     /**
+     * retrieve information and status of a multisig send
+     * For convenience, the payment proposal status is returned in $result['copayStatus']
+     * @param  string $send_id  the id from sendFromMultisigAddress
+     * @return array            An array with the send information.  Includes `copayTransaction` which contains the copay status information.
+     */   
+    public function getMultisigSend($send_id)
+    {
+        $result = $this->newAPIRequest('GET', '/multisig/sends/'.$send_id, array());
+        $result['copayStatus'] = 
+            (isset($result['copayTransaction']) AND $result['copayTransaction']['status']) 
+            ? $result['copayTransaction']['status'] 
+            : null;
+        return $result; 
+    }
+
+    /**
      * monitor a new address
      * @param  string  $address          bitcoin/counterparty address
      * @param  string  $webhook_endpoint webhook callback URL
