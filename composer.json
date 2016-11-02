@@ -20,6 +20,6 @@
         "phpunit/phpunit": "~4"
     },
     "autoload": {
-        "psr-0": {"Tokenly\\XChainClient": "src"}
+        "psr-4": {"Tokenly\\XChainClient\\": "src/"}
     }
 }
