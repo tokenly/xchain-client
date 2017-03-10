@@ -262,6 +262,26 @@ class Client
      * @param  float  $fee                bitcoin fee
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
+     * @return array                      An array with the send information, including `txid`
+     */
+    public function sendWithFeeRate($payment_address_id, $destination, $quantity, $asset, $fee_rate='medium', $request_id=null) {
+        return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', $_unconfirmed=true, $_fee=null, $_dust_size=null, $request_id, $_custom_inputs=null, $fee_rate);
+    }
+
+    /**
+     * sends confirmed and unconfirmed funds from the given payment address
+     * confirmed funds are sent first if they are available
+     *
+     * ** Deprecated ** - Use sendWithFeeRate instead
+     *
+     * @param  string $payment_address_id address uuid
+     * @param  string $destination        destination bitcoin address
+     * @param  float  $quantity           quantity to send
+     * @param  string $asset              asset name to send
+     * @param  float  $fee                bitcoin fee
+     * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
+     * @param  string $request_id         a unique id for this request
      * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
      * @return array                      An array with the send information, including `txid`
      */
@@ -297,9 +317,10 @@ class Client
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
      * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @return array                      An array with the send information, including `txid`
      */
-    public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false) {
+    public function sendFromAccount($payment_address_id, $destination, $quantity, $asset, $account='default', $unconfirmed=false, $fee=null, $dust_size=null, $request_id=null, $custom_inputs=false, $fee_rate=null) {
         $body = [
             'destination'   => $destination,
             'quantity'      => $quantity,
@@ -312,6 +333,7 @@ class Client
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
         if ($request_id !== null) { $body['requestId'] = $request_id; }
+        if ($fee_rate !== null)   { $body['feeRate']   = $fee_rate; }
 
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
@@ -359,9 +381,10 @@ class Client
      * @param  bool   $unconfirmed        allow unconfirmed funds to be sent
      * @param  float  $fee                bitcoin fee
      * @param  string $request_id         a unique id for this request
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @return array                      An array with the send information, including `txid`
      */
-    public function sendBTCToMultipleDestinations($payment_address_id, $destinations, $account='default', $unconfirmed=false, $fee=null, $request_id=null) {
+    public function sendBTCToMultipleDestinations($payment_address_id, $destinations, $account='default', $unconfirmed=false, $fee=null, $request_id=null, $fee_rate=null) {
         $body = [
             'destinations' => $destinations,
             'sweep'        => false,
@@ -370,6 +393,7 @@ class Client
         ];
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($request_id !== null) { $body['requestId'] = $request_id; }
+        if ($fee_rate !== null)   { $body['feeRate']   = $fee_rate; }
 
         $result = $this->newAPIRequest('POST', '/multisends/'.$payment_address_id, $body);
         return $result;
@@ -379,7 +403,7 @@ class Client
      * sends all assets and all BTC to a destination address
      * @return array the send details
      */
-    public function sweepAllAssets($payment_address_id, $destination, $fee=null, $dust_size=null, $request_id=null) {
+    public function sweepAllAssets($payment_address_id, $destination, $fee=null, $dust_size=null, $request_id=null, $fee_rate=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => null,
@@ -389,6 +413,7 @@ class Client
         if ($fee !== null)        { $body['fee']       = $fee; }
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
         if ($request_id !== null) { $body['requestId'] = $request_id; }
+        if ($fee_rate !== null)   { $body['feeRate']   = $fee_rate; }
 
         $result = $this->newAPIRequest('POST', '/sends/'.$payment_address_id, $body);
         return $result;
