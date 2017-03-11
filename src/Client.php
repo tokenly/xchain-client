@@ -313,7 +313,7 @@ class Client
      * @param  string $asset              asset name to send
      * @param  string $account            an account name to send from
      * @param  bool   $unconfirmed        allow unconfirmed funds to be sent
-     * @param  float  $fee                bitcoin fee
+     * @param  float  $fee                bitcoin fee (deprecated - use fee_rate instead)
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
      * @param  array  $custom_inputs      custom list of utxos to use to build this transaction, format [{txid: id, n: 0}*]
