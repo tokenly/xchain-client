@@ -696,7 +696,7 @@ class Client
     }
 
     /**
-     * Transfers all funds from one account to another that are tagged with a transaction ID
+     * Ensures a payment address has multiple UTXOs of a certain size
      * An example result might look like this
      * {
      *     "primedCount": 1,
@@ -704,6 +704,36 @@ class Client
      *     "txid": "999999992e2981dd792c7a1b484e9d6a5a8a65355d121b8f014848421fe1b164",
      *     "primed": true
      * }
+     * @param  string  $payment_address_uuid the address id
+     * @param  float   $utxo_size            the size of the primed UTXOs to create
+     * @param  integer $desired_count        the number of primed UTXOs to create
+     * @param  float   $fee                  bitcoin fee
+     * @param  string  $fee_rate             A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
+     * @return array The API call result
+     */
+    public function primeUTXOsWithFeeRate($payment_address_uuid, $utxo_size, $desired_count, $fee_rate='medium') {
+        $body = [
+            'size'    => $utxo_size,
+            'count'   => $desired_count,
+            'feeRate' => $fee_rate,
+        ];
+
+        $result = $this->newAPIRequest('POST', '/primes/'.$payment_address_uuid, $body);
+        return $result;
+    }
+
+    /**
+     * Ensures a payment address has multiple UTXOs of a certain size
+     * An example result might look like this
+     * {
+     *     "primedCount": 1,
+     *     "totalCount": 2,
+     *     "txid": "999999992e2981dd792c7a1b484e9d6a5a8a65355d121b8f014848421fe1b164",
+     *     "primed": true
+     * }
+     * 
+     * ** Deprecated ** - Use primeUTXOsWithFeeRate instead
+     * 
      * @param  string $payment_address_uuid the address id
      * @param  float $utxo_size the size of the primed UTXOs to create
      * @param  integer $desired_count the number of primed UTXOs to create
