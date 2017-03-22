@@ -146,6 +146,34 @@ class Client
     }
 
     /**
+     * issue a new token from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  float  $quantity           quantity to issue
+     * @param  string $asset              asset name to issue
+     * @param  bool   $divisible          Whether the asset is divisible or not
+     * @param  string $description        description attached to the issuance
+     * @param  float  $fee_per_kb         bitcoin fee per kilobyte
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the issuance information, including `id`
+     */
+    public function createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description='', $fee_per_kb=null, $request_id=null) {
+        if ($fee_per_kb === null) { $fee_per_kb = 0.0005; }
+
+        $body = [
+            'quantity'  => $quantity,
+            'asset'     => $asset,
+            'divisible' => $divisible,
+            'feePerKB'  => $fee_per_kb,
+        ];
+        if ($request_id !== null)  { $body['requestId']   = $request_id; }
+        if ($description !== null) { $body['description'] = $description; }
+
+        $result = $this->newAPIRequest('POST', '/multisig/issuances/'.$payment_address_id, $body);
+        return $result;
+    }
+
+    /**
      * monitor a new address
      * @param  string  $address          bitcoin/counterparty address
      * @param  string  $webhook_endpoint webhook callback URL
