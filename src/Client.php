@@ -95,20 +95,18 @@ class Client
      * @param  string $destination        destination bitcoin address
      * @param  float  $quantity           quantity to send
      * @param  string $asset              asset name to send
-     * @param  float  $fee_per_kb         bitcoin fee per kilobyte
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @param  string $message            message
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
      * @return array                      An array with the send information, including `id`
      */
-    public function sendFromMultisigAddress($payment_address_id, $destination, $quantity, $asset, $fee_per_kb=null, $message=null, $dust_size=null, $request_id=null) {
-        if ($fee_per_kb === null) { $fee_per_kb = 0.0005; }
-
+    public function sendFromMultisigAddress($payment_address_id, $destination, $quantity, $asset, $fee_rate='medium', $message=null, $dust_size=null, $request_id=null) {
         $body = [
             'destination' => $destination,
             'quantity'    => $quantity,
             'asset'       => $asset,
-            'feePerKB'    => $fee_per_kb,
+            'feeRate'     => $fee_rate,
         ];
         if ($dust_size !== null)  { $body['dust_size'] = $dust_size; }
         if ($request_id !== null) { $body['requestId'] = $request_id; }
@@ -153,18 +151,16 @@ class Client
      * @param  string $asset              asset name to issue
      * @param  bool   $divisible          Whether the asset is divisible or not
      * @param  string $description        description attached to the issuance
-     * @param  float  $fee_per_kb         bitcoin fee per kilobyte
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @param  string $request_id         a unique id for this request
      * @return array                      An array with the issuance information, including `id`
      */
-    public function createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description='', $fee_per_kb=null, $request_id=null) {
-        if ($fee_per_kb === null) { $fee_per_kb = 0.0005; }
-
+    public function createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description='', $fee_rate='medium', $request_id=null) {
         $body = [
             'quantity'  => $quantity,
             'asset'     => $asset,
             'divisible' => $divisible,
-            'feePerKB'  => $fee_per_kb,
+            'feeRate'   => $fee_rate,
         ];
         if ($request_id !== null)  { $body['requestId']   = $request_id; }
         if ($description !== null) { $body['description'] = $description; }
