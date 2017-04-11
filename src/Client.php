@@ -863,6 +863,22 @@ class Client
         return new Quantity(intval($priority) * $result['size']);
     }
 
+    /**
+     * returns fee per byte estimates in the form of:
+     * {
+     *     "low": 5,
+     *     "medlow": 84,
+     *     "medium": 118,
+     *     "medhigh": 151,
+     *     "high": 201
+     * }
+     * @return Array Fee rates in satoshis per byte
+     * 
+     */
+    public function getFeeRates() {
+        $result = $this->newAPIRequest('GET', '/api/v1/feerates');
+        return $result;
+    }
 
     /**
      * estimates the fee for sending confirmed and unconfirmed funds from the given payment address
