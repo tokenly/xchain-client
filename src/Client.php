@@ -190,9 +190,9 @@ class Client
     
     /**
      * switches a monitor between active and inactive states
-     * @param string $id 				the uuid of the address monitor
-     * @param boolean $active 			active
-     * @return array					monitor object
+     * @param string $id                the uuid of the address monitor
+     * @param boolean $active           active
+     * @return array                    monitor object
      * */
     public function updateAddressMonitorActiveState($id, $active=true) {
         $body = [
@@ -200,29 +200,29 @@ class Client
         ];
         $result = $this->newAPIRequest('PATCH', '/monitors/'.$id, $body);
         return $result;
-	}
-	
+    }
+    
     /**
      * get details about an address monitor
-     * @param string $id 				the uuid of the address monitor
-     * @return array					monitor object
-     * */	
-	public function getAddressMonitor($id)
-	{
+     * @param string $id                the uuid of the address monitor
+     * @return array                    monitor object
+     * */   
+    public function getAddressMonitor($id)
+    {
         $result = $this->newAPIRequest('GET', '/monitors/'.$id, array());
-        return $result;	
-	}
-	
+        return $result; 
+    }
+    
     /**
      * destroys an address monitor from the DB
-     * @param string $id 				the uuid of the address monitor
+     * @param string $id                the uuid of the address monitor
      * @return null
-     * */	
-	public function destroyAddressMonitor($id)
-	{
+     * */   
+    public function destroyAddressMonitor($id)
+    {
         $result = $this->newAPIRequest('DELETE', '/monitors/'.$id, array());
-        return $result;	
-	}
+        return $result; 
+    }
 
     /**
      * monitor a new event
@@ -475,8 +475,8 @@ class Client
     public function getAssets($assets)
     {
         $result = $this->newAPIRequest('GET', '/assets', ['assets' => implode(',', $assets)]);
-		return $result;
-	}
+        return $result;
+    }
 
     ////////////////////////////////////////////////////////////////////////
     // Acounts
@@ -782,37 +782,37 @@ class Client
     */
     public function validateAddress($address)
     {
-		$result = $this->newAPIRequest('GET', '/validate/'.$address);
-		return $result;
-	}
-	
-	
-	/*
-	* Verifies a message signed with a bitcoin address
-	* @param string $address signers bitcoin address
-	* @param string $sig the cryptographic signature
-	* @param string $message the message to verify against
-	* @return array the API call result (result: boolean)
-	*/
-	public function verifyMessage($address, $sig, $message)
-	{
-		$body = ['sig' => $sig, 'message' => $message];
-		$result = $this->newAPIRequest('GET', '/message/verify/'.$address, $body);
-		return $result;
-	}
-	
-	/*
-	* Signs a message using a bitcoin address
-	* @param string $address bitcoin address or uuid
-	* @param string $message the message
-	* @return array the API call result (result: string)
-	*/
-	public function signMessage($address, $message)
-	{
-		$body = ['message' => $message];
-		$result = $this->newAPIRequest('POST', '/message/sign/'.$address, $body);
-		return $result;
-	}
+        $result = $this->newAPIRequest('GET', '/validate/'.$address);
+        return $result;
+    }
+    
+    
+    /*
+    * Verifies a message signed with a bitcoin address
+    * @param string $address signers bitcoin address
+    * @param string $sig the cryptographic signature
+    * @param string $message the message to verify against
+    * @return array the API call result (result: boolean)
+    */
+    public function verifyMessage($address, $sig, $message)
+    {
+        $body = ['sig' => $sig, 'message' => $message];
+        $result = $this->newAPIRequest('GET', '/message/verify/'.$address, $body);
+        return $result;
+    }
+    
+    /*
+    * Signs a message using a bitcoin address
+    * @param string $address bitcoin address or uuid
+    * @param string $message the message
+    * @return array the API call result (result: string)
+    */
+    public function signMessage($address, $message)
+    {
+        $body = ['message' => $message];
+        $result = $this->newAPIRequest('POST', '/message/sign/'.$address, $body);
+        return $result;
+    }
 
 
 
@@ -939,6 +939,15 @@ class Client
                         $xchain_exception = new XChainException($json['message'], $code);
                         $xchain_exception->setErrorName($json['errorName']);
                         throw $xchain_exception;
+                    }
+
+                    if (isset($json['errors']) AND is_array($json['errors'])) {
+                        // errors exception
+                        $errors_text = implode(" ", $json['errors']);
+                        if ($errors_text != $json['message']) {
+                            $errors_text = $json['message'].' '.$errors_text;
+                        }
+                        throw new Exception($errors_text, $code);
                     }
 
                     // generic exception
