@@ -876,7 +876,7 @@ class Client
      * 
      */
     public function getFeeRates() {
-        $result = $this->newAPIRequest('GET', '/api/v1/feerates');
+        $result = $this->newAPIRequest('GET', '/feerates');
         return $result;
     }
 
