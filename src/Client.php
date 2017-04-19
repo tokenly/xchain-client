@@ -283,12 +283,12 @@ class Client
      * @param  string $destination        destination bitcoin address
      * @param  float  $quantity           quantity to send
      * @param  string $asset              asset name to send
-     * @param  float  $fee                bitcoin fee
+     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @param  float  $dust_size          bitcoin transaction dust size for counterparty transactions
      * @param  string $request_id         a unique id for this request
-     * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @return array                      An array with the send information, including `txid`
      */
+
     public function sendWithFeeRate($payment_address_id, $destination, $quantity, $asset, $fee_rate='medium', $request_id=null) {
         return $this->sendFromAccount($payment_address_id, $destination, $quantity, $asset, 'default', $_unconfirmed=true, $_fee=null, $_dust_size=null, $request_id, $_custom_inputs=null, $fee_rate);
     }
