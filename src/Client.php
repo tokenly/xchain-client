@@ -153,20 +153,38 @@ class Client
      * @param  string $description        description attached to the issuance
      * @param  string $fee_rate           A fee rate to use. Accepts a pre-defined setting ("low","lowmed","medium","medhigh","high"), a number of blocks ("6 blocks"), or an exact number of satohis per byte ("75")
      * @param  string $request_id         a unique id for this request
+     * @param  string $fee_satoshis       An exact fee to use in satoshis
      * @return array                      An array with the issuance information, including `id`
      */
-    public function createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description='', $fee_rate='medium', $request_id=null) {
+    public function createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description='', $fee_rate='medium', $request_id=null, $fee_satoshis=null) {
         $body = [
             'quantity'  => $quantity,
             'asset'     => $asset,
             'divisible' => $divisible,
-            'feeRate'   => $fee_rate,
         ];
-        if ($request_id !== null)  { $body['requestId']   = $request_id; }
-        if ($description !== null) { $body['description'] = $description; }
+        if ($fee_rate !== null)      { $body['feeRate']     = $fee_rate; }
+        if ($fee_satoshis !== null)  { $body['feeSat']      = $fee_satoshis; }
+        if ($request_id !== null)    { $body['requestId']   = $request_id; }
+        if ($description !== null)   { $body['description'] = $description; }
 
         $result = $this->newAPIRequest('POST', '/multisig/issuances/'.$payment_address_id, $body);
         return $result;
+    }
+
+    /**
+     * issue a new token from the given payment address
+     * confirmed funds are sent first if they are available
+     * @param  string $payment_address_id address uuid
+     * @param  float  $quantity           quantity to issue
+     * @param  string $asset              asset name to issue
+     * @param  bool   $divisible          Whether the asset is divisible or not
+     * @param  string $description        description attached to the issuance
+     * @param  string $fee_satoshis       An exact fee to use in satoshis
+     * @param  string $request_id         a unique id for this request
+     * @return array                      An array with the issuance information, including `id`
+     */
+    public function createIssuanceFromMultisigAddressWithExactFee($payment_address_id, $quantity, $asset, $divisible, $description, $fee_satoshis, $request_id=null) {
+        return $this->createIssuanceFromMultisigAddress($payment_address_id, $quantity, $asset, $divisible, $description, $_fee_rate=null, $request_id, $fee_satoshis);
     }
 
     /**
