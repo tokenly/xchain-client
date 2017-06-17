@@ -133,6 +133,11 @@ class MockBuilder
                 $xchain_recorder->calls[] = $call_data;
                 Event::fire('xchainMock.callBegin', [$call_data]);
 
+                // high priority mocks
+                if (substr($path, 0, 10) == '/balances/') {
+                    return $this->returnMockResult($this->sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data, substr($call_data['path'], 10)), $call_data);
+                }
+
                 // call a method that returns sample data
                 $sample_method_name = 'sampleData_'.strtolower($method).'_'.preg_replace('![^a-z0-9]+!i', '_', trim($path, '/'));
                 if (method_exists($this, $sample_method_name)) {
@@ -150,9 +155,6 @@ class MockBuilder
                     $this->debitBalance($btc_debit, 'BTC', $account, 'confirmed', $payment_address_id);
 
                     return $this->returnMockResult($this->sampleData_post_sends_xxxxxxxx_xxxx_4xxx_yxxx_111111111111($data), $call_data);
-                }
-                if (substr($path, 0, 10) == '/balances/') {
-                    return $this->returnMockResult($this->sampleData_get_balances_1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx($data, substr($call_data['path'], 10)), $call_data);
                 }
                 if (substr($path, 0, 19) == '/accounts/transfer/') {
                     try {
