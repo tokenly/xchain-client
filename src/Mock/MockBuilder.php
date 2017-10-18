@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\XChainClient\Exception\XChainException;
 use Tokenly\XChainClient\Mock\MockTestCase;
-use \PHPUnit_Framework_MockObject_MockBuilder;
-use \PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
+
 
 /**
 * XChain Mock Builder

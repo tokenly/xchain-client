@@ -2,7 +2,7 @@
 
 namespace Tokenly\XChainClient\Mock;
 
-use \PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
 use Exception;
 
 /**
